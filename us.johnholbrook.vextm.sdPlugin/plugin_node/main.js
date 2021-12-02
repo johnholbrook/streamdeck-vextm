@@ -170,7 +170,7 @@ function main(){
                 // update the match info displayed on any start/end actions
                 let info = `${data.match}\n${data.state}\n${secsToTime(data.time)}`;
                 actions.forEach(action => {
-                    if (action.action == "us.johnholbrook.vextm.start_end"){
+                    if (action.action == "us.johnholbrook.vextm.start-end"){
                         // send match into text (match, state, time)
                         send({
                             "event": "setTitle",
@@ -220,7 +220,7 @@ function main(){
                 case "us.johnholbrook.vextm.queue_prog":
                     TM.queueProgrammingSkills(1);
                     break;
-                case "us.johnholbrook.vextm.start_end":
+                case "us.johnholbrook.vextm.start-end":
                     TM.startOrEnd();
                     break;
                 case "us.johnholbrook.vextm.reset":

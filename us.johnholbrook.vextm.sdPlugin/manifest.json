@@ -27,14 +27,14 @@
     "Actions": [
         {
             "Name": "Start/End Match",
-            "UUID": "us.johnholbrook.vextm.start_end",
-            "Icon": "images/start_end/action_icon",
+            "UUID": "us.johnholbrook.vextm.start-end",
+            "Icon": "images/start-end/action_icon",
             "States": [
                 {
-                    "Image": "images/start_end/start"
+                    "Image": "images/start-end/start"
                 },
                 {
-                    "Image": "images/start_end/end"
+                    "Image": "images/start-end/end"
                 }
             ]
         },
