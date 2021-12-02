@@ -211,13 +211,13 @@ function main(){
                 case "us.johnholbrook.vextm.queue-next":
                     TM.queueNextMatch();
                     break;
-                case "us.johnholbrook.vextm.queue_prev":
+                case "us.johnholbrook.vextm.queue-prev":
                     TM.queuePrevMatch();
                     break;
-                case "us.johnholbrook.vextm.queue_driving":
+                case "us.johnholbrook.vextm.queue-driving":
                     TM.queueDrivingSkills(1);
                     break;
-                case "us.johnholbrook.vextm.queue_prog":
+                case "us.johnholbrook.vextm.queue-prog":
                     TM.queueProgrammingSkills(1);
                     break;
                 case "us.johnholbrook.vextm.start-end":

@@ -48,7 +48,7 @@
         },
         {
             "Name": "Queue Previous Match",
-            "UUID": "us.johnholbrook.vextm.queue_prev",
+            "UUID": "us.johnholbrook.vextm.queue-prev",
             "Icon": "images/queue_prev",
             "States": [{
                 "Image": "images/queue_prev"
@@ -56,7 +56,7 @@
         },
         {
             "Name": "Queue Driving Skills",
-            "UUID": "us.johnholbrook.vextm.queue_driving",
+            "UUID": "us.johnholbrook.vextm.queue-driving",
             "Icon": "images/queue_driving",
             "States": [{
                 "Image": "images/queue_driving"
@@ -64,7 +64,7 @@
         },
         {
             "Name": "Queue Programming Skills",
-            "UUID": "us.johnholbrook.vextm.queue_prog",
+            "UUID": "us.johnholbrook.vextm.queue-prog",
             "Icon": "images/queue_prog",
             "States": [{
                 "Image": "images/queue_prog"
