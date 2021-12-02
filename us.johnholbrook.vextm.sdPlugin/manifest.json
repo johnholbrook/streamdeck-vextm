@@ -40,7 +40,7 @@
         },
         {
             "Name": "Queue Next Match",
-            "UUID": "us.johnholbrook.vextm.queue_next",
+            "UUID": "us.johnholbrook.vextm.queue-next",
             "Icon": "images/queue_next",
             "States": [{
                 "Image": "images/queue_next"

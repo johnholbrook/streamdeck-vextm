@@ -208,7 +208,7 @@ function main(){
         else if (json.event == "keyDown" && tm_conn_established){
             // do the right thing based on which action was triggered
             switch (json.action){
-                case "us.johnholbrook.vextm.queue_next":
+                case "us.johnholbrook.vextm.queue-next":
                     TM.queueNextMatch();
                     break;
                 case "us.johnholbrook.vextm.queue_prev":
