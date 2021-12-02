@@ -1,0 +1,82 @@
+{
+    "SDKVersion": 2,
+    "Author": "John Holbrook",
+    "CodePath": "plugin_node/main-win.exe",
+    "CodePathMac": "plugin_node/main-macos",
+    "PropertyInspectorPath": "pi/pi.html",
+    "Description": "Plugin for controlling VEX Tournament Manager",
+    "Name": "VEX Tournament Manager",
+    "Version": "1.0",
+    "Category": "VEX TM",
+    "CategoryIcon": "images/category_icon",
+    "URL": "https://github.com/johnholbrook/streamdeck-vextm",
+    "Icon": "images/category_icon",
+    "OS": [
+        {
+            "Platform": "windows",
+            "MinimumVersion": "10"
+        },
+        {
+            "Platform": "mac",
+            "MinimumVersion": "10.11"
+        }
+    ],
+    "Software": {
+        "MinimumVersion": "5.0"
+    },
+    "Actions": [
+        {
+            "Name": "Start/End Match",
+            "UUID": "us.johnholbrook.vextm.start_end",
+            "Icon": "images/start_end/action_icon",
+            "States": [
+                {
+                    "Image": "images/start_end/start"
+                },
+                {
+                    "Image": "images/start_end/end"
+                }
+            ]
+        },
+        {
+            "Name": "Queue Next Match",
+            "UUID": "us.johnholbrook.vextm.queue_next",
+            "Icon": "images/queue_next",
+            "States": [{
+                "Image": "images/queue_next"
+            }]
+        },
+        {
+            "Name": "Queue Previous Match",
+            "UUID": "us.johnholbrook.vextm.queue_prev",
+            "Icon": "images/queue_prev",
+            "States": [{
+                "Image": "images/queue_prev"
+            }]
+        },
+        {
+            "Name": "Queue Driving Skills",
+            "UUID": "us.johnholbrook.vextm.queue_driving",
+            "Icon": "images/queue_driving",
+            "States": [{
+                "Image": "images/queue_driving"
+            }]
+        },
+        {
+            "Name": "Queue Programming Skills",
+            "UUID": "us.johnholbrook.vextm.queue_prog",
+            "Icon": "images/queue_prog",
+            "States": [{
+                "Image": "images/queue_prog"
+            }]
+        },
+        {
+            "Name": "Reset Timer",
+            "UUID": "us.johnholbrook.vextm.reset",
+            "Icon": "images/reset",
+            "States": [{
+                "Image": "images/reset"
+            }]
+        }
+    ]
+}

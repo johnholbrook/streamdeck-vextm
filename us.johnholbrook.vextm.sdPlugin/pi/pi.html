@@ -1,0 +1,51 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="sdpi.css">
+        <script src="pi.js"></script>
+        <style>
+            #reconnect-button{
+                display: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="sdpi-wrapper">
+            <hr>
+
+            <div class="sdpi-item">
+                <div class="sdpi-item-label">Server Addr</div>
+                <input type="text" class="sdpi-item-value" id="tm-addr-input" placeholder="Leave blank for localhost">
+            </div>
+
+            <div class="sdpi-item">
+                <div class="sdpi-item-label">Password</div>
+                <input type="password" class="sdpi-item-value" id="tm-pass-input">
+            </div>
+
+            <div class="sdpi-item" id="reconnect-button">
+                <div class="sdpi-item-label">Reconnect</div>
+                <button class="sdpi-item-value" id="reconnect">RECONNECT</button>
+            </div>
+
+            <div class="sdpi-item" id="display-select-wrapper">
+                <div class="sdpi-item-label">Display</div>
+                <select id="display-select" class="select sdpi-item-value">
+                    <option value="1">None</option>
+                    <option value="2" selected>Intro</option>
+                    <option value="3">In-Match</option>
+                    <option value="4">Saved Match Results</option>
+                    <option value="5">Rankings</option>
+                    <option value="6">Logos</option>
+                    <option value="7">Alliance Selection</option>
+                    <option value="8">Elim. Bracket</option>
+                    <option value="9">Skills Rankings</option>
+                    <option value="12">Slides</option>
+                    <option value="13">Schedule</option>
+                    <option value="15">Inspection</option>
+                </select>
+            </div>
+        </div>
+    </body>
+</html>

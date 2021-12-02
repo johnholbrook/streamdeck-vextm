@@ -1,0 +1,18 @@
+{
+  "name": "streamdeck_vextm_plugin",
+  "version": "1.0.0",
+  "description": "Streamdeck plugin to control VEX Tournament manager",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "pkg -t node16-macos,node16-win main.js"
+  },
+  "author": "John Holbrook",
+  "license": "ISC",
+  "dependencies": {
+    "dialog": "^0.3.1",
+    "form-data": "^4.0.0",
+    "fs": "^0.0.1-security",
+    "ws": "^8.3.0"
+  }
+}
