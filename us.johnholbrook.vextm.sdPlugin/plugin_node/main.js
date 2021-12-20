@@ -105,7 +105,7 @@ function main(){
     // dialog.info(JSON.stringify(inInfo));
 
     // create a new websocket on the appropriate port
-    websocket = new WebSocket(`ws://localhost:${inPort}`);
+    websocket = new WebSocket(`ws://127.0.0.1:${inPort}`);
 
     // register the plugin with the Stream Deck Software
     websocket.on("open", () => {

@@ -42,7 +42,7 @@ function log(message){
  */
 function connectElgatoStreamDeckSocket(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo){
     // create a new websocket on the appropriate port
-    websocket = new WebSocket("ws://localhost:" + inPort);
+    websocket = new WebSocket("ws://127.0.0.1:" + inPort);
 
     // register the PI with the stream deck software
     websocket.onopen = function(){
@@ -70,6 +70,10 @@ function connectElgatoStreamDeckSocket(inPort, inPropertyInspectorUUID, inRegist
 
         // if the plugin sends a global settings update, update the UI
         if (data.event == "didReceiveGlobalSettings"){
+            alert(`
+            ${data.payload.settings.address}
+            ${data.payload.settings.password}
+            `);
             document.querySelector("#tm-addr-input").value = data.payload.settings.address ? data.payload.settings.address : "";
             document.querySelector("#tm-pass-input").value = data.payload.settings.password ? data.payload.settings.password : "";
         }
