@@ -70,12 +70,9 @@ function connectElgatoStreamDeckSocket(inPort, inPropertyInspectorUUID, inRegist
 
         // if the plugin sends a global settings update, update the UI
         if (data.event == "didReceiveGlobalSettings"){
-            alert(`
-            ${data.payload.settings.address}
-            ${data.payload.settings.password}
-            `);
             document.querySelector("#tm-addr-input").value = data.payload.settings.address ? data.payload.settings.address : "";
             document.querySelector("#tm-pass-input").value = data.payload.settings.password ? data.payload.settings.password : "";
+            document.querySelector("#field-set-id").value = data.payload.settings.fieldset ? data.payload.settings.fieldset : 1;
         }
     };
 
@@ -106,13 +103,15 @@ function connectElgatoStreamDeckSocket(inPort, inPropertyInspectorUUID, inRegist
 function updateSettings(){
     let address = document.querySelector("#tm-addr-input").value;
     let password = document.querySelector("#tm-pass-input").value;
+    let field_set = document.querySelector("#field-set-id").value;
     log(`PI updating settings: ${address} ${password}`);
     send({
         "event": "setGlobalSettings",
         "context": context,
         "payload": {
             "address": address ? address : "localhost",
-            "password": password
+            "password": password,
+            "fieldset": field_set
         }
     });
 }
@@ -136,6 +135,7 @@ function updateSelectedDisplay(){
 document.addEventListener("DOMContentLoaded", function() {
     document.querySelector("#tm-addr-input").onchange = updateSettings;
     document.querySelector("#tm-pass-input").onchange = updateSettings;
+    document.querySelector("#field-set-id").onchange = updateSettings;
     document.querySelector("#reconnect").onclick = updateSettings;
     document.querySelector("#display-select").onchange = updateSelectedDisplay;
 });

@@ -17,11 +17,13 @@ module.exports = class VexTMWebsocket{
      * VexTMWebsocket constructor.
      * @param {String} address – TM server address
      * @param {String} password – TM admin password
+     * @param {Number} fieldset - ID of the field set to control
      * @param {Function} log – function to send log data to
      */
-    constructor(address, password, log=console.log){
+    constructor(address, password, fieldset, log=console.log){
         this.address = address; // address of the TM server
         this.password = password; // TM admin password
+        this.fieldset = fieldset; // ID of the field set to connect to
         this.log = log; // function to send log data to
 
         this.socket = null; // websocket object used to talk to the TM server
@@ -85,6 +87,7 @@ module.exports = class VexTMWebsocket{
         }
 
         if (force){
+            this.close();
             this.websocket = null;
         }
 
@@ -93,7 +96,7 @@ module.exports = class VexTMWebsocket{
             return;
         }
 
-        this.websocket = new WebSocket(`ws://${this.address}/fieldsets/1`, {
+        this.websocket = new WebSocket(`ws://${this.address}/fieldsets/${this.fieldset}`, {
             headers: {
                 Cookie: this.cookie
             }
@@ -160,6 +163,17 @@ module.exports = class VexTMWebsocket{
     async init(){
         this.log("Initializing connection to TM server...");
         await this._connectWebsocket(true);
+    }
+
+    /**
+     * Close the websocket connection
+     */
+    async close(){
+        this.log("Closing connection to TM server...");
+        if (this.websocket){
+            this.websocket.close(1000);
+            this.we
+        }
     }
 
     /**

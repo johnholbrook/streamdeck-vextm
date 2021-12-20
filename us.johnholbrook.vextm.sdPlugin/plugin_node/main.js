@@ -135,20 +135,24 @@ function main(){
         if (json.event == "didReceiveGlobalSettings"){
             tm_addr = json.payload.settings.address;
             tm_pass = json.payload.settings.password;
+            tm_fs = json.payload.settings.fieldset;
 
             // try to connect to tournament manager
             tm_conn_established = false;
             while (!tm_conn_established){
                 try{
                     // (re) create the TM object
-                    // TM = null;
-                    // TM = new VexTMWebsocket(tm_addr, tm_pass, log);
                     if (TM){
-                        TM.setCredentials(tm_addr, tm_pass);
+                        TM.close();
                     }
-                    else{
-                        TM = new VexTMWebsocket(tm_addr, tm_pass, log);
-                    }
+                    TM = null;
+                    TM = new VexTMWebsocket(tm_addr, tm_pass, tm_fs, log);
+                    // if (TM){
+                    //     TM.setCredentials(tm_addr, tm_pass);
+                    // }
+                    // else{
+                    //     TM = new VexTMWebsocket(tm_addr, tm_pass, log);
+                    // }
                     await TM.init();
                     tm_conn_established = true;
                 }
