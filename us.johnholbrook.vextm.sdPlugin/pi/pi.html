@@ -6,7 +6,7 @@
         <script src="pi.js"></script>
         <style>
             #reconnect-button{
-                display: none;
+                /* display: none; */
             }
         </style>
     </head>
@@ -22,6 +22,17 @@
             <div class="sdpi-item">
                 <div class="sdpi-item-label">Password</div>
                 <input type="password" class="sdpi-item-value" id="tm-pass-input">
+            </div>
+
+            <div class="sdpi-item">
+                <div class="sdpi-item-label">Field Set ID</div>
+                <input type="number" name="" class="sdpi-item-value" id="field-set-id">
+            </div>
+
+            <div class="sdpi-item">
+                <details class="message info">
+                    <summary>Field set IDs start at 1 and count up from there if you have more than 1 field set.</summary>
+                </details>
             </div>
 
             <div class="sdpi-item" id="reconnect-button">
