@@ -197,6 +197,25 @@ function main(){
                 });
             });
 
+            // callback to execute when a new screen is shown on the audience display
+            TM.onDisplaySelected(display => {
+                // log(`Display updated to ${display}`);
+                // set the appropriate state for each "select display" action
+                setTimeout(() => {
+                    Object.keys(selectedDisplays).forEach(uuid => {
+                        let this_action_disp = parseInt(selectedDisplays[uuid]);
+                        log(`display updated to ${display}; this action display = ${this_action_disp}`)
+                        send({
+                            "event": "setState",
+                            "context": uuid,
+                            "payload": {
+                                "state": (this_action_disp == display) ? 0 : 1
+                            }
+                        });
+                    });
+                }, 200)
+            });
+
             // if the connection to TM is closed...
             TM.onClose(() => {
                 // ask the stream deck software for the credentials and start trying to reconnect
@@ -234,7 +253,8 @@ function main(){
                     // log(`Select display: ${json.context}`);
                     // log(JSON.stringify(selectedDisplays));
                     // log(JSON.stringify(selectedDisplays[json.context]));
-                    TM.selectDisplay(JSON.stringify(selectedDisplays[json.context]));
+                    // TM.selectDisplay(JSON.stringify(selectedDisplays[json.context]));
+                    TM.selectDisplay(selectedDisplays[json.context]);
                     break;
             }
         }
@@ -248,7 +268,8 @@ function main(){
             log(JSON.stringify(actions));
             if (json.action == "us.johnholbrook.vextm.select_display"){
                 // keep track of which display should be selected when this action is triggered
-                selectedDisplays[json.context] = selectedDisplays[json.context] ? json.payload.settings.selected_display : 2;
+                // selectedDisplays[json.context] = selectedDisplays[json.context] ? json.payload.settings.selected_display : 2;
+                selectedDisplays[json.context] = json.payload.settings.selected_display ? json.payload.settings.selected_display : 2;
                 
                 log(JSON.stringify(selectedDisplays));
             }

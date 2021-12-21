@@ -77,6 +77,19 @@
             "States": [{
                 "Image": "images/reset"
             }]
+        },
+        {
+            "Name": "Select Display",
+            "UUID": "us.johnholbrook.vextm.select_display",
+            "Icon": "images/display/display_light",
+            "States": [
+                {
+                    "Image": "images/display/display_light"
+                },
+                {
+                    "Image": "images/display/display_dark"
+                }
+            ]
         }
     ]
 }

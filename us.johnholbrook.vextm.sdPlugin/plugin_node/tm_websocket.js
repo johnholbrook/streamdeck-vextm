@@ -33,12 +33,13 @@ module.exports = class VexTMWebsocket{
 
         this.currentFieldId = null; // ID of the current field
         this.matchRunning = false; // whether a match is currently running
-
         this.currentMatch = null; // name of the match currently queued or running
         this.currentState = null; // state of the current match (AUTO, DRIVER, DISABLED, or TIMEOUT)
         this.currentMatchTime = 0; // time (in seconds) remaining in the current match
+        this.currentDisplay = null; // ID of the screen currently showing on the audience display
 
         this.onMatchInfoChangeCallback = null; // function to call when the current match info (match number, state, or time) changes
+        this.onDisplaySelectedCallback = null; // function to call when a new display is selected
         this.onCloseCallback = null; // function to call when the connection to TM is closed
     }
 
@@ -83,6 +84,7 @@ module.exports = class VexTMWebsocket{
         if(!this.cookie || this.cookie_expiration < new Date()){
             await this._authenticate();
             // now delete the websocket so we will have to recreate it
+            this.close();
             this.websocket = null;
         }
 
@@ -146,7 +148,6 @@ module.exports = class VexTMWebsocket{
         else if (message.type == "matchPaused"){ // match paused
             this.matchRunning = false;
             this.currentFieldId = message.fieldId;
-
             this.currentState = "PAUSED";
             this._whenMatchInfoChanged();
         }
@@ -154,6 +155,10 @@ module.exports = class VexTMWebsocket{
             this.currentState = message.state == "DISABLED" ? "DSBL" : message.state; // "DISABLED" is long compared to the other states
             this.currentMatchTime = message.remaining;
             this._whenMatchInfoChanged();
+        }
+        else if (message.type == "displayUpdated"){// screen showign on audience display changed
+            this.currentDisplay = message.display;
+            this._whenDisplaySelected();
         }
     }
 
@@ -172,7 +177,6 @@ module.exports = class VexTMWebsocket{
         this.log("Closing connection to TM server...");
         if (this.websocket){
             this.websocket.close(1000);
-            this.we
         }
     }
 
@@ -267,11 +271,17 @@ module.exports = class VexTMWebsocket{
         });
     }
 
+    /**
+     * Select a particular display
+     * @param {*} d number of the display to select
+     */
     async selectDisplay(d){
-        await this._send({
+        let data = {
             "action": "setScreen",
             "screen": parseInt(d)
-        });
+        };
+        this.log(JSON.stringify(data));
+        await this._send(data);
     }
 
     /**
@@ -292,6 +302,23 @@ module.exports = class VexTMWebsocket{
             "time" : this.currentMatchTime,
             "isRunning": this.matchRunning
         });
+    }
+
+    /**
+     * Specify a function to be called any time the audience display content is changed
+     * @param {Function} callback - callback to execute
+     */
+    onDisplaySelected(callback){
+        this.onDisplaySelectedCallback = callback;
+    }
+
+    /**
+     * Helper function to call the onDisplaySelected callback
+     */
+    _whenDisplaySelected(){
+        if (this.onDisplaySelectedCallback != null){
+            this.onDisplaySelectedCallback(this.currentDisplay);
+        }
     }
 
     /**
