@@ -14,7 +14,7 @@ const WebSocket = require("ws");
  */
 module.exports = class VexTMWebsocket{
     /**
-     * VexTMWebsocket constructor.
+     * VexTMWebsocket constructor
      * @param {String} address – TM server address
      * @param {String} password – TM admin password
      * @param {Number} fieldset - ID of the field set to control
@@ -115,7 +115,6 @@ module.exports = class VexTMWebsocket{
 
         this.websocket.on('message', async event => {
             let data = JSON.parse(event.toString());
-            this.log(event.toString());
             this._messageHandler(data);
         });
     }
@@ -125,10 +124,13 @@ module.exports = class VexTMWebsocket{
      * @param {Object} message – the message to handle
      */
     async _messageHandler(message){
+        // log the message unless it's a "timeUpdated" message (those come too frequently)
+        if (message.type != "timeUpdated") this.log(JSON.stringify(message));
+
         if (message.type == "fieldMatchAssigned"){ // match queued
             // update the current field ID
             this.currentFieldId = message.fieldId ? message.fieldId : this.currentFieldId; // if the new field ID is null, don't accept it
-            this.log(`Field ID updated to ${this.currentFieldId}`);
+            // this.log(`Field ID updated to ${this.currentFieldId}`);
 
             // update the match name
             this.currentMatch = message.name;
@@ -156,7 +158,7 @@ module.exports = class VexTMWebsocket{
             this.currentMatchTime = message.remaining;
             this._whenMatchInfoChanged();
         }
-        else if (message.type == "displayUpdated"){// screen showign on audience display changed
+        else if (message.type == "displayUpdated"){// screen showing on audience display changed
             this.currentDisplay = message.display;
             this._whenDisplaySelected();
         }
@@ -247,7 +249,7 @@ module.exports = class VexTMWebsocket{
         await this._send({
             "action": "queueDriving"
         });
-        this.currentFieldId = fieldId;
+        this.currentFieldId = parseInt(fieldId);
     }
 
     /**
@@ -258,7 +260,7 @@ module.exports = class VexTMWebsocket{
         await this._send({
             "action": "queueProgramming"
         });
-        this.currentFieldId = fieldId;
+        this.currentFieldId = parseInt(fieldId);
     }
 
     /**
@@ -280,7 +282,6 @@ module.exports = class VexTMWebsocket{
             "action": "setScreen",
             "screen": parseInt(d)
         };
-        this.log(JSON.stringify(data));
         await this._send(data);
     }
 

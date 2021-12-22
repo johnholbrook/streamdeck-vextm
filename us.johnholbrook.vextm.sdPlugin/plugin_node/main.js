@@ -17,6 +17,7 @@ var tm_pass = null; // TM admin password
 var TM = null; // object representing connection to the TM server
 var actions = []; // list of all the active actions
 var selectedDisplays = {}; // object containing the display associated with each "select display" action
+var skillsFields = {}; // object containing the field to queue a skills match on for each "queue driving" or "queue programming" action
 var tm_conn_established = false; // are we connected to tournament manager?
 
 
@@ -51,15 +52,12 @@ function log(message){
  function removeItem(arr, key){
     let idx = -1;
     let sKey = JSON.stringify(key)
-    // console.log(sKey)
     for (let i=0; i<arr.length; i++){
-        // let sCurr = JSON.stringify(arr[i])
         if (JSON.stringify(arr[i]) == sKey){
             idx = i;
             break;
         }
     }
-    console.log(idx);
     if (idx >= 0){
         arr.splice(idx, 1);
     }
@@ -204,7 +202,6 @@ function main(){
                 setTimeout(() => {
                     Object.keys(selectedDisplays).forEach(uuid => {
                         let this_action_disp = parseInt(selectedDisplays[uuid]);
-                        log(`display updated to ${display}; this action display = ${this_action_disp}`)
                         send({
                             "event": "setState",
                             "context": uuid,
@@ -238,10 +235,10 @@ function main(){
                     TM.queuePrevMatch();
                     break;
                 case "us.johnholbrook.vextm.queue-driving":
-                    TM.queueDrivingSkills(1);
+                    TM.queueDrivingSkills(skillsFields[json.context]);
                     break;
                 case "us.johnholbrook.vextm.queue-prog":
-                    TM.queueProgrammingSkills(1);
+                    TM.queueProgrammingSkills(skillsFields[json.context]);
                     break;
                 case "us.johnholbrook.vextm.start-end":
                     TM.startOrEnd();
@@ -250,10 +247,6 @@ function main(){
                     TM.resetTimer();
                     break;
                 case "us.johnholbrook.vextm.select_display":
-                    // log(`Select display: ${json.context}`);
-                    // log(JSON.stringify(selectedDisplays));
-                    // log(JSON.stringify(selectedDisplays[json.context]));
-                    // TM.selectDisplay(JSON.stringify(selectedDisplays[json.context]));
                     TM.selectDisplay(selectedDisplays[json.context]);
                     break;
             }
@@ -265,13 +258,14 @@ function main(){
                 uuid: json.context,
                 action: json.action
             });
-            log(JSON.stringify(actions));
+            // log(JSON.stringify(actions));
             if (json.action == "us.johnholbrook.vextm.select_display"){
                 // keep track of which display should be selected when this action is triggered
-                // selectedDisplays[json.context] = selectedDisplays[json.context] ? json.payload.settings.selected_display : 2;
                 selectedDisplays[json.context] = json.payload.settings.selected_display ? json.payload.settings.selected_display : 2;
-                
-                log(JSON.stringify(selectedDisplays));
+                // log(JSON.stringify(selectedDisplays));
+            }
+            else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog"].includes(json.action)){
+                skillsFields[json.context] = json.payload.settings.field_id ? json.payload.settings.field_id : 1;
             }
         }
         // deregister a start/end action when it disappears
@@ -280,11 +274,14 @@ function main(){
                 uuid: json.context,
                 action: json.action
             });
-            log(JSON.stringify(actions));
+            // log(JSON.stringify(actions));
             if (json.action == "us.johnholbrook.vextm.select_display"){
                 // stop keeping track of which display should be selected when this action is triggered
                 delete selectedDisplays[json.context];
-                log(JSON.stringify(selectedDisplays));
+                // log(JSON.stringify(selectedDisplays));
+            }
+            else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog"].includes(json.action)){
+                delete skillsFields[json.context];
             }
         }
 
@@ -293,7 +290,12 @@ function main(){
             if (json.action == "us.johnholbrook.vextm.select_display"){
                 // keep track of which display should be selected when this action is triggered
                 selectedDisplays[json.context] = json.payload.settings.selected_display;
-                log(JSON.stringify(selectedDisplays));
+                // log(JSON.stringify(selectedDisplays));
+            }
+
+            // update the field to queue a skills match on when this action is triggered
+            else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog"].includes(json.action)){
+                skillsFields[json.context] = json.payload.settings.field_id;
             }
         }
 

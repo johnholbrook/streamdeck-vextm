@@ -76,13 +76,19 @@ function connectElgatoStreamDeckSocket(inPort, inPropertyInspectorUUID, inRegist
         }
     };
 
-    // hide the "display" dropdown if this isn't the "select display" action
-    if (action != "us.johnholbrook.vextm.select_display"){
-        document.querySelector("#display-select-wrapper").style.display = "none";
-    }
-    else {
-        // set the selected display dropdown to the existing selection (or just default to option 2)
+    // show the correct action-specific options, if any
+    if (action == "us.johnholbrook.vextm.select_display"){
+        document.querySelector("#field-select-wrapper").style.display = "none";
         document.querySelector("#display-select").value = actionInfo.payload.settings.selected_display ? actionInfo.payload.settings.selected_display : "2";
+    }
+    else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog"].includes(action)){
+        document.querySelector("#display-select-wrapper").style.display = "none";
+        document.querySelector("#field-id-input").value = actionInfo.payload.settings.field_id ? actionInfo.payload.settings.field_id : "1";
+    }
+    else{
+        document.querySelector("#field-select-wrapper").style.display = "none";
+        document.querySelector("#display-select-wrapper").style.display = "none";
+        document.querySelector("#action-settings").style.display = "none";
     }
 
     // after 200ms, ask for the global settings
@@ -131,6 +137,20 @@ function updateSelectedDisplay(){
     });
 }
 
+/**
+ * Send the selected field ID to the plugin
+ */
+function updateSelectedField(){
+    let selection = document.querySelector("#field-id-input").value;
+    log(`PI setting Field ID to ${selection}`);
+    send({
+        "event": "setSettings",
+        "context": context,
+        "payload": {
+            "field_id": selection
+        }
+    });
+}
 
 document.addEventListener("DOMContentLoaded", function() {
     document.querySelector("#tm-addr-input").onchange = updateSettings;
@@ -138,4 +158,5 @@ document.addEventListener("DOMContentLoaded", function() {
     document.querySelector("#field-set-id").onchange = updateSettings;
     document.querySelector("#reconnect").onclick = updateSettings;
     document.querySelector("#display-select").onchange = updateSelectedDisplay;
+    document.querySelector("#field-id-input").onchange = updateSelectedField;
 });
