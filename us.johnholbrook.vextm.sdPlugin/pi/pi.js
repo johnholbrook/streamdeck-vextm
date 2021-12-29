@@ -77,7 +77,7 @@ function connectElgatoStreamDeckSocket(inPort, inPropertyInspectorUUID, inRegist
     };
 
     // show the correct action-specific options, if any
-    if (action == "us.johnholbrook.vextm.select_display"){
+    if (action == "us.johnholbrook.vextm.select-display"){
         document.querySelector("#field-select-wrapper").style.display = "none";
         document.querySelector("#display-select").value = actionInfo.payload.settings.selected_display ? actionInfo.payload.settings.selected_display : "2";
     }

@@ -80,7 +80,7 @@
         },
         {
             "Name": "Select Display",
-            "UUID": "us.johnholbrook.vextm.select_display",
+            "UUID": "us.johnholbrook.vextm.select-display",
             "Icon": "images/display/display_light",
             "States": [
                 {

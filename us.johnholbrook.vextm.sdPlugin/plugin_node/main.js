@@ -246,7 +246,7 @@ function main(){
                 case "us.johnholbrook.vextm.reset":
                     TM.resetTimer();
                     break;
-                case "us.johnholbrook.vextm.select_display":
+                case "us.johnholbrook.vextm.select-display":
                     TM.selectDisplay(selectedDisplays[json.context]);
                     break;
             }
@@ -259,7 +259,7 @@ function main(){
                 action: json.action
             });
             // log(JSON.stringify(actions));
-            if (json.action == "us.johnholbrook.vextm.select_display"){
+            if (json.action == "us.johnholbrook.vextm.select-display"){
                 // keep track of which display should be selected when this action is triggered
                 selectedDisplays[json.context] = json.payload.settings.selected_display ? json.payload.settings.selected_display : 2;
                 // log(JSON.stringify(selectedDisplays));
@@ -275,7 +275,7 @@ function main(){
                 action: json.action
             });
             // log(JSON.stringify(actions));
-            if (json.action == "us.johnholbrook.vextm.select_display"){
+            if (json.action == "us.johnholbrook.vextm.select-display"){
                 // stop keeping track of which display should be selected when this action is triggered
                 delete selectedDisplays[json.context];
                 // log(JSON.stringify(selectedDisplays));
@@ -287,7 +287,7 @@ function main(){
 
         else if (json.event == "didReceiveSettings"){
             // update the display to be selected when this action is triggered
-            if (json.action == "us.johnholbrook.vextm.select_display"){
+            if (json.action == "us.johnholbrook.vextm.select-display"){
                 // keep track of which display should be selected when this action is triggered
                 selectedDisplays[json.context] = json.payload.settings.selected_display;
                 // log(JSON.stringify(selectedDisplays));
