@@ -195,20 +195,24 @@ module.exports = class VexTMWebsocket{
      * Start the currently-queued match
      */
     async start(){
-        await this._send({
-            "action": "start",
-            "fieldId": this.currentFieldId
-        });
+        if (!this.matchRunning){
+            await this._send({
+                "action": "start",
+                "fieldId": this.currentFieldId
+            });
+        }
     }
 
     /**
      * End the match early
      */
     async endEarly(){
-        await this._send({
-            "action": "endEarly",
-            "fieldId": this.currentFieldId
-        });
+        if (this.matchRunning){
+            await this._send({
+                "action": "endEarly",
+                "fieldId": this.currentFieldId
+            });
+        }    
     }
 
     /**
@@ -267,10 +271,12 @@ module.exports = class VexTMWebsocket{
      * Reset match timer
      */
     async resetTimer(){
-        await this._send({
-            "action": "reset",
-            "fieldId": this.currentFieldId
-        });
+        if (!this.matchRunning){
+            await this._send({
+                "action": "reset",
+                "fieldId": this.currentFieldId
+            });
+        } 
     }
 
     /**

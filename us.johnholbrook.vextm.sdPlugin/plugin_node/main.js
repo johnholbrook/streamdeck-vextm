@@ -240,6 +240,12 @@ function main(){
                 case "us.johnholbrook.vextm.queue-prog":
                     TM.queueProgrammingSkills(skillsFields[json.context]);
                     break;
+                case "us.johnholbrook.vextm.start-match":
+                    TM.start();
+                    break;
+                case "us.johnholbrook.vextm.end-early":
+                    TM.endEarly();
+                    break;
                 case "us.johnholbrook.vextm.start-end":
                     TM.startOrEnd();
                     break;

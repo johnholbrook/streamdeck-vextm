@@ -34,6 +34,22 @@
             ]
         },
         {
+            "Name": "Start Match",
+            "UUID": "us.johnholbrook.vextm.start-match",
+            "Icon": "images/start-end/start",
+            "States": [{
+                "Image": "images/start-end/start"
+            }]
+        },
+        {
+            "Name": "End Early",
+            "UUID": "us.johnholbrook.vextm.end-early",
+            "Icon": "images/start-end/end",
+            "States": [{
+                "Image": "images/start-end/end"
+            }]
+        },
+        {
             "Name": "Queue Next Match",
             "UUID": "us.johnholbrook.vextm.queue-next",
             "Icon": "images/queue_next",
