@@ -172,7 +172,7 @@ function main(){
                 // update the match info displayed on any start/end actions
                 let info = `${data.match}\n${data.state}\n${secsToTime(data.time)}`;
                 actions.forEach(action => {
-                    if (action.action == "us.johnholbrook.vextm.start-end"){
+                    if (action.action == "us.johnholbrook.vextm.start-end" || action.action == "us.johnholbrook.vextm.match-info"){
                         // send match into text (match, state, time)
                         send({
                             "event": "setTitle",

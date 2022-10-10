@@ -50,6 +50,14 @@
             }]
         },
         {
+            "Name": "Match Info",
+            "UUID": "us.johnholbrook.vextm.match-info",
+            "Icon": "images/match_info_action_icon",
+            "States": [{
+                "Image": "images/blank_state"
+            }]
+        },
+        {
             "Name": "Queue Next Match",
             "UUID": "us.johnholbrook.vextm.queue-next",
             "Icon": "images/queue_next",
