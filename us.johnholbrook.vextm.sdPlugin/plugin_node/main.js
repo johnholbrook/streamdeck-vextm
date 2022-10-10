@@ -20,6 +20,21 @@ var selectedDisplays = {}; // object containing the display associated with each
 var skillsFields = {}; // object containing the field to queue a skills match on for each "queue driving" or "queue programming" action
 var tm_conn_established = false; // are we connected to tournament manager?
 
+// ID and name of each TM display
+const display_id_names = {
+    1: "None",
+    2: "Intro",
+    3: "In-Match",
+    4: "Saved\nMatch\nResults",
+    5: "Qual.\nRankings",
+    6: "Logos",
+    7: "Alliance\nSelection",
+    8: "Elim\nBracket",
+    9: "Skills\nRankings",
+    12: "Slides",
+    13: "Schedule",
+    15: "Insp."
+}
 
 /**
  * Send some JSON data to the stream deck software.
@@ -269,6 +284,14 @@ function main(){
                 // keep track of which display should be selected when this action is triggered
                 selectedDisplays[json.context] = json.payload.settings.selected_display ? json.payload.settings.selected_display : 2;
                 // log(JSON.stringify(selectedDisplays));
+                // Set the title of the action according to the selected display
+                send({
+                    "event": "setTitle",
+                    "context": json.context,
+                    "payload": {
+                        "title": display_id_names[json.payload.settings.selected_display]
+                    }
+                });
             }
             else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog"].includes(json.action)){
                 skillsFields[json.context] = json.payload.settings.field_id ? json.payload.settings.field_id : 1;
@@ -297,6 +320,14 @@ function main(){
                 // keep track of which display should be selected when this action is triggered
                 selectedDisplays[json.context] = json.payload.settings.selected_display;
                 // log(JSON.stringify(selectedDisplays));
+                // Set the title of the action according to the selected display
+                send({
+                    "event": "setTitle",
+                    "context": json.context,
+                    "payload": {
+                        "title": display_id_names[json.payload.settings.selected_display]
+                    }
+                });
             }
 
             // update the field to queue a skills match on when this action is triggered
