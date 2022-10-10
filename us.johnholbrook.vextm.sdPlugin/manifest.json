@@ -2,6 +2,7 @@
     "SDKVersion": 2,
     "Author": "John Holbrook",
     "CodePath": "./plugin_node/main-win.exe",
+    "CodePathMac": "./plugin_node/main-mac",
     "PropertyInspectorPath": "pi/pi.html",
     "Description": "Plugin for controlling VEX Tournament Manager",
     "Name": "VEX Tournament Manager",
@@ -14,6 +15,10 @@
         {
             "Platform": "windows",
             "MinimumVersion": "10"
+        },
+        {
+            "Platform": "mac",
+            "MinimumVersion": "10.11"
         }
     ],
     "Software": {
