@@ -7,6 +7,7 @@
 const FormData = require("form-data");
 const { promisify } = require("util");
 const WebSocket = require("ws");
+const protobuf = require('protobufjs');
 
 /**
  * @class VexTMWebsocket
@@ -21,6 +22,7 @@ module.exports = class VexTMWebsocket{
      * @param {Function} log – function to send log data to
      */
     constructor(address, password, fieldset, log=console.log){
+
         this.address = address; // address of the TM server
         this.password = password; // TM admin password
         this.fieldset = fieldset; // ID of the field set to connect to
@@ -31,12 +33,17 @@ module.exports = class VexTMWebsocket{
         this.cookie = null; // session cookie returned by the TM server
         this.cookie_expiration = null; // expiration time of the session cookie
 
+        this.pb = null; // protobuf schema
+        this.fs_notice = null; // protobuf message type "FieldSetNotice"
+        this.fs_request = null; // protobuf message type "FieldSetRequest"
+
         this.currentFieldId = null; // ID of the current field
         this.matchRunning = false; // whether a match is currently running
         this.currentMatch = null; // name of the match currently queued or running
         this.currentState = null; // state of the current match (AUTO, DRIVER, DISABLED, or TIMEOUT)
         this.currentMatchTime = 0; // time (in seconds) remaining in the current match
         this.currentDisplay = null; // ID of the screen currently showing on the audience display
+        this.fieldList = null; // list of all fields and associated IDs
 
         this.onMatchInfoChangeCallback = null; // function to call when the current match info (match number, state, or time) changes
         this.onDisplaySelectedCallback = null; // function to call when a new display is selected
@@ -98,25 +105,116 @@ module.exports = class VexTMWebsocket{
             return;
         }
 
+        // open and parse the protobuf schema
+        this.pb = await protobuf.load("./plugin_node/fieldset.proto");
+        this.fs_notice = this.pb.lookupType("FieldSetNotice");
+        this.fs_request = this.pb.lookupType("FieldSetRequest");
+
         this.websocket = new WebSocket(`ws://${this.address}/fieldsets/${this.fieldset}`, {
             headers: {
                 Cookie: this.cookie
             }
         });
 
-
         this.websocket.on('open', () => {
             this.log("Websocket connected to TM");
+
+            // send handshake to TM
+            let hs = this._generateHandshake();
+            this.log("Initiating handshake...");
+            this._send(hs);
         });
+
         this.websocket.on('close', () => {
             this.log("Websocket disconnected from TM");
             this.onCloseCallback();
         });
 
         this.websocket.on('message', async event => {
-            let data = JSON.parse(event.toString());
-            this._messageHandler(data);
+            this._messageHandler(event);
+            
+            // let data = JSON.parse(event.toString());
+            // this._messageHandler(data);
         });
+    }
+
+    /**
+     * Generates the "handshake message" needed to send to TM.
+     * The message is 128 bytes long, namely:
+     * - 7 bytes of padding (content irrelevant)
+     * - Current UNIX timestamp in seconds since epoch (little-endian). Must be within 300s of TM server's time for handshake to be accepted.
+     * - 117 bytes of padding (content irrelevant)
+     * Yes, really. ¯\_(ツ)_/¯
+     */
+    _generateHandshake(){
+        let unixTime = (Math.floor(Date.now() / 1000)).toString(16); // unix timestamp in big-endian hex
+        
+        // create byte array
+        let hs = new Uint8Array(128);
+
+        // write time to byte array (little-endian)
+        hs[7]  = parseInt(unixTime.slice(6,8), 16);
+        hs[8]  = parseInt(unixTime.slice(4,6), 16);
+        hs[9]  = parseInt(unixTime.slice(2,4), 16);
+        hs[10] = parseInt(unixTime.slice(0,2), 16);
+        
+        return hs;
+    }
+
+    /**
+     * "Unmangles" a message recieved from the TM server into something decodable as a protobuf
+     * @param {Buffer} raw_data – Data to unmangle
+     * @returns unmangled data, which can be interpreted as a protpbuf
+     */
+    _unmangle(raw_data){
+        let magic_number = raw_data[0] ^ 229;
+        // console.log("Magic number: ", magic_number);
+
+        let unmangled_data = Buffer.alloc(raw_data.length - 1);
+        for (let i=1; i<raw_data.length; i++){
+            unmangled_data[i-1] = raw_data[i] ^ magic_number;
+        }
+
+        return unmangled_data;
+    }
+
+    /**
+     * "Mangles" a message before it can be sent to TM (the inverse of _unmangle above)
+     * @param {Buffer} data - (protobuf) data to be mangled
+     * @param {Int8} magic_number - magic number to use (pick any value or omit to use the default of 123)
+     * @returns mangled data to be sent to TM
+     */
+    _mangle(data, magic_number = 123){
+        let mangled_data = Buffer.alloc(data.length + 1);
+
+        mangled_data[0] = magic_number ^ 229;
+
+        for (let i=1; i<mangled_data.length; i++){
+            mangled_data[i] = data[i-1] ^ magic_number;
+        }
+
+        return mangled_data;
+    }
+
+    /**
+     * Generates a match name as displayed in TM (e.g. "Q123" or "SF 1-1")
+     * from a V3MatchTuple object 
+     * @param {Object} match 
+     * @returns Name of the match as displayed in TM
+     */
+    _buildMatchName(match){
+        // this.log(JSON.stringify(match.toJSON()))
+        const elim_rounds = ["R128", "R64", "R32", "R16", "QF", "SF", "F"];
+
+        if (match.round == "QUAL") return `Q${match.match}`;
+        else if (elim_rounds.includes(match.round)) return `${match.round} ${match.instance}-${match.match}`;
+        else if (match.round == "PRACTICE") return "P0"
+        else if (match.round == "TIMEOUT") return "TO"
+        else if (match.round == "SKILLS"){
+            // RIP to the name "Programming Skills", 2007 - 2023 :(
+            return match.instance == 2 ? "D Skills" : "A Coding";
+        }
+        else return "OTHER"
     }
 
     /**
@@ -124,44 +222,57 @@ module.exports = class VexTMWebsocket{
      * @param {Object} message – the message to handle
      */
     async _messageHandler(message){
-        // log the message unless it's a "timeUpdated" message (those come too frequently)
-        if (message.type != "timeUpdated") this.log(JSON.stringify(message));
+        let unmangled = this._unmangle(message);
+        let decoded = this.fs_notice.decode(unmangled);
 
-        if (message.type == "fieldMatchAssigned"){ // match queued
+        // log the message unless it's a "timeUpdated" message (those come too frequently)
+        if (decoded.id != 6) this.log(JSON.stringify(decoded.toJSON()));
+
+        if (decoded.id == 8){ // match queued
             // update the current field ID
-            this.currentFieldId = message.fieldId ? message.fieldId : this.currentFieldId; // if the new field ID is null, don't accept it
-            // this.log(`Field ID updated to ${this.currentFieldId}`);
+            this.currentFieldId = decoded.fieldId;
 
             // update the match name
-            this.currentMatch = message.name;
+            this.currentMatch = this._buildMatchName(decoded.match.toJSON());
+
             this._whenMatchInfoChanged();
         }
-        else if (message.type == "matchStarted"){// match started
+        else if (decoded.id == 1){ // match started
             this.matchRunning = true;
-            this.currentFieldId = message.fieldId;
+            this.currentState = "RUNNING";
+            this.currentFieldId = decoded.fieldId;
             this._whenMatchInfoChanged();
         }
-        else if (message.type == "matchStopped" || message.type == "matchAborted"){// match stopped
+        else if (decoded.id == 2 || decoded.id == 5){ // match stopped or aborted
             this.matchRunning = false;
-            this.currentFieldId = message.fieldId;
+            this.currentFieldId = decoded.fieldId;
             this.currentState = "DSBL";
             this._whenMatchInfoChanged();
         }
-        else if (message.type == "matchPaused"){ // match paused
+        else if (decoded.id == 3){ // match paused
             this.matchRunning = false;
-            this.currentFieldId = message.fieldId;
+            this.currentFieldId = decoded.fieldId;
             this.currentState = "PAUSED";
             this._whenMatchInfoChanged();
         }
-        else if (message.type == "timeUpdated"){// time remaining in current match updated
-            this.currentState = message.state == "DISABLED" ? "DSBL" : message.state; // "DISABLED" is long compared to the other states
-            this.currentMatchTime = message.remaining;
+        else if (decoded.id == 6){ // time updated
+            // this.currentState = "RUNNING";
+            this.currentMatchTime = decoded.remaining;
             this._whenMatchInfoChanged();
         }
-        else if (message.type == "displayUpdated"){// screen showing on audience display changed
-            this.currentDisplay = message.display;
-            this._whenDisplaySelected();
+        else if (decoded.id == 13){ // field list
+            this.fieldList = decoded.fields;
         }
+        else if (decoded.id == 14){ // FIELD_ACTIVATED
+            this.currentFieldId = decoded.fieldId;
+            this._whenMatchInfoChanged();
+        }
+        // don't have a message type yet for when the audience display is changed :(
+
+        // else if (message.type == "displayUpdated"){// screen showing on audience display changed
+        //     this.currentDisplay = message.display;
+        //     this._whenDisplaySelected();
+        // }
     }
 
     /**
@@ -184,11 +295,66 @@ module.exports = class VexTMWebsocket{
 
     /**
      * Send a message to the TM server
-     * @param {Object} data - data to send
+     * @param {Buffer} data - data to send
      */
     async _send(data){
         await this._connectWebsocket();
-        this.websocket.send(JSON.stringify(data));
+        this.websocket.send(data);
+    }
+
+    /**
+     * Send a "FieldSetRequest" message to TM
+     * @param {Object} msg - Object representing a valid "FieldSetRequest" message
+     */
+    _sendFSRequest(msg){
+        let buffer = this.fs_request.encode(msg).finish();
+        console.log(buffer);
+        let mangled = this._mangle(buffer);
+        this._send(mangled);
+    }
+
+    /**
+     * Construct and send a "FieldControlRequest" with the specified value
+     * @param {Number} value - value to send. Meanings are:
+     * 0 - none (presumably this does nothing)
+     * 1 - start match
+     * 2 - end early
+     * 3 - abort
+     * 4 - reset timer
+     */
+    _sendFCRequest(value){
+        let msg = {
+            fieldControl: {
+                id: value,
+                fieldId: this.currentFieldId
+            }
+        };
+
+        this._sendFSRequest(msg);
+    }
+
+    /**
+     * 
+     * @param {Number} type - Type of match to queue (1 for next match, 2 for driving skills, 3 for programming skills)
+     */
+    _queueMatch(type){
+        let msg = {
+            queueMatch: type
+        };
+        this._sendFSRequest(msg);
+    }
+
+    /**
+     * Send a "SetActiveFieldRequest" message, i.e., (re)assign the currently-queued match to a particular field
+     * @param {Number} id - ID of field to set as active
+     */
+    _setActiveFieldRequest(id){
+        let msg = {
+            setActive: {
+                fieldId: id
+            }
+        };
+        this._sendFSRequest(msg);
     }
 
     /**
@@ -196,10 +362,7 @@ module.exports = class VexTMWebsocket{
      */
     async start(){
         if (!this.matchRunning){
-            await this._send({
-                "action": "start",
-                "fieldId": this.currentFieldId
-            });
+            this._sendFCRequest(1);
         }
     }
 
@@ -208,10 +371,7 @@ module.exports = class VexTMWebsocket{
      */
     async endEarly(){
         if (this.matchRunning){
-            await this._send({
-                "action": "endEarly",
-                "fieldId": this.currentFieldId
-            });
+            this._sendFCRequest(2);
         }    
     }
 
@@ -231,18 +391,14 @@ module.exports = class VexTMWebsocket{
      * Queue the next match
      */
     async queueNextMatch(){
-        await this._send({
-            "action": "queueNextMatch"
-        });
+        this._queueMatch(1);
     }
 
     /**
      * Queue the previous match
      */
     async queuePrevMatch(){
-        await this._send({
-            "action": "queuePrevMatch"
-        });
+        // can't do this with the new protobuf interface yet :(
     }
 
     /**
@@ -250,10 +406,9 @@ module.exports = class VexTMWebsocket{
      * @param {Int} fieldId – ID of the field to queue the skills match on
      */
     async queueDrivingSkills(fieldId){
-        await this._send({
-            "action": "queueDriving"
-        });
+        this._queueMatch(2);
         this.currentFieldId = parseInt(fieldId);
+        this._setActiveFieldRequest(fieldId);
     }
 
     /**
@@ -261,22 +416,16 @@ module.exports = class VexTMWebsocket{
      * @param {Int} fieldId – ID of the field to queue the skills match on
      */
     async queueProgrammingSkills(fieldId){
-        await this._send({
-            "action": "queueProgramming"
-        });
+        this._queueMatch(3);
         this.currentFieldId = parseInt(fieldId);
+        this._setActiveFieldRequest(fieldId);
     }
 
     /**
      * Reset match timer
      */
     async resetTimer(){
-        if (!this.matchRunning){
-            await this._send({
-                "action": "reset",
-                "fieldId": this.currentFieldId
-            });
-        } 
+        this._sendFCRequest(4);
     }
 
     /**
@@ -284,11 +433,7 @@ module.exports = class VexTMWebsocket{
      * @param {*} d number of the display to select
      */
     async selectDisplay(d){
-        let data = {
-            "action": "setScreen",
-            "screen": parseInt(d)
-        };
-        await this._send(data);
+        // can't do this with the new protobuf interface yet :(
     }
 
     /**
@@ -307,7 +452,8 @@ module.exports = class VexTMWebsocket{
             "match": this.currentMatch,
             "state": this.currentState,
             "time" : this.currentMatchTime,
-            "isRunning": this.matchRunning
+            "isRunning": this.matchRunning,
+            "field": this.fieldList[this.currentFieldId]
         });
     }
 

@@ -13,6 +13,7 @@
     "dialog": "^0.3.1",
     "form-data": "^4.0.0",
     "fs": "^0.0.1-security",
+    "protobufjs": "^7.2.4",
     "ws": "^8.3.0"
   }
 }
