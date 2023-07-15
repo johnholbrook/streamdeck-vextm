@@ -79,15 +79,23 @@ function connectElgatoStreamDeckSocket(inPort, inPropertyInspectorUUID, inRegist
     // show the correct action-specific options, if any
     if (action == "us.johnholbrook.vextm.select-display"){
         document.querySelector("#field-select-wrapper").style.display = "none";
+        document.querySelector("#info-select-wrapper").style.display = "none";
         document.querySelector("#display-select").value = actionInfo.payload.settings.selected_display ? actionInfo.payload.settings.selected_display : "2";
+    }
+    else if (action == "us.johnholbrook.vextm.match-info"){
+        document.querySelector("#field-select-wrapper").style.display = "none";
+        document.querySelector("#display-select-wrapper").style.display = "none";
+        document.querySelector("#info-select").value = actionInfo.payload.settings.selected_info ? actionInfo.payload.settings.selected_info : "1";
     }
     else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog"].includes(action)){
         document.querySelector("#display-select-wrapper").style.display = "none";
+        document.querySelector("#info-select-wrapper").style.display = "none";
         document.querySelector("#field-id-input").value = actionInfo.payload.settings.field_id ? actionInfo.payload.settings.field_id : "1";
     }
     else{
         document.querySelector("#field-select-wrapper").style.display = "none";
         document.querySelector("#display-select-wrapper").style.display = "none";
+        document.querySelector("#info-select-wrapper").style.display = "none";
         document.querySelector("#action-settings").style.display = "none";
     }
 
@@ -152,6 +160,21 @@ function updateSelectedField(){
     });
 }
 
+/**
+ * Send the selected info to display on teh match info action to the plugin
+ */
+function updateSelectedInfo(){
+    let selection = document.querySelector("#info-select").value;
+    log(`PI Setting Match Info to ${selection}`);
+    send({
+        "event": "setSettings",
+        "context": context,
+        "payload": {
+            "selected_info": selection
+        }
+    });
+}
+
 document.addEventListener("DOMContentLoaded", function() {
     document.querySelector("#tm-addr-input").onchange = updateSettings;
     document.querySelector("#tm-pass-input").onchange = updateSettings;
@@ -159,4 +182,5 @@ document.addEventListener("DOMContentLoaded", function() {
     document.querySelector("#reconnect").onclick = updateSettings;
     document.querySelector("#display-select").onchange = updateSelectedDisplay;
     document.querySelector("#field-id-input").onchange = updateSelectedField;
+    document.querySelector("#info-select").onchange = updateSelectedInfo;
 });

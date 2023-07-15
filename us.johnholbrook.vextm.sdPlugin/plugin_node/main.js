@@ -18,6 +18,7 @@ var TM = null; // object representing connection to the TM server
 var actions = []; // list of all the active actions
 var selectedDisplays = {}; // object containing the display associated with each "select display" action
 var skillsFields = {}; // object containing the field to queue a skills match on for each "queue driving" or "queue programming" action
+var matchInfoActionPreferences = {}; // object containing user preferences for what to show on each "match info" action
 var tm_conn_established = false; // are we connected to tournament manager?
 
 // ID and name of each TM display
@@ -188,7 +189,8 @@ function main(){
                 // let info = `${data.match}\n${data.state}\n${secsToTime(data.time)}`;
                 let info = `${data.match}\n${data.field}\n${data.state}\n${secsToTime(data.time)}`;
                 actions.forEach(action => {
-                    if (action.action == "us.johnholbrook.vextm.start-end" || action.action == "us.johnholbrook.vextm.match-info"){
+                    // if (action.action == "us.johnholbrook.vextm.start-end" || action.action == "us.johnholbrook.vextm.match-info"){
+                    if (action.action == "us.johnholbrook.vextm.start-end"){
                         // send match into text (match, state, time)
                         send({
                             "event": "setTitle",
@@ -205,6 +207,24 @@ function main(){
                             "context": action.uuid,
                             "payload": {
                                 "state": data.isRunning ? 1 : 0
+                            }
+                        });
+                    }
+                    else if (action.action == "us.johnholbrook.vextm.match-info"){
+                        // let this_action_text = "";
+                        let preference = matchInfoActionPreferences[action.uuid];
+                        let options = {
+                            1: info,
+                            2: data.match,
+                            3: data.field,
+                            4: data.state,
+                            5: secsToTime(data.time)
+                        }
+                        send({
+                            "event": "setTitle",
+                            "context": action.uuid,
+                            "payload": {
+                                "title": options[preference]
                             }
                         });
                     }
@@ -297,7 +317,12 @@ function main(){
             else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog"].includes(json.action)){
                 skillsFields[json.context] = json.payload.settings.field_id ? json.payload.settings.field_id : 1;
             }
+            else if (json.action == "us.johnholbrook.vextm.match-info"){
+                matchInfoActionPreferences[json.context] = json.payload.settings.selected_info ? json.payload.settings.selected_info : 1;
+                if (tm_conn_established) TM._whenMatchInfoChanged();
+            }
         }
+
         // deregister a start/end action when it disappears
         else if (json.event == "willDisappear"){
             actions = removeItem(actions, {
@@ -312,6 +337,9 @@ function main(){
             }
             else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog"].includes(json.action)){
                 delete skillsFields[json.context];
+            }
+            else if (json.action == "us.johnholbrook.vextm.match-info"){
+                delete matchInfoActionPreferences[json.context];
             }
         }
 
@@ -334,6 +362,12 @@ function main(){
             // update the field to queue a skills match on when this action is triggered
             else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog"].includes(json.action)){
                 skillsFields[json.context] = json.payload.settings.field_id;
+            }
+
+            // update the info to be shown on this "match info" action
+            else if (json.action == "us.johnholbrook.vextm.match-info"){
+                matchInfoActionPreferences[json.context] = json.payload.settings.selected_info;
+                if (tm_conn_established) TM._whenMatchInfoChanged();
             }
         }
 
