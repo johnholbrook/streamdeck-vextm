@@ -238,8 +238,19 @@ module.exports = class VexTMWebsocket{
             this._whenMatchInfoChanged();
         }
         else if (decoded.id == 1){ // match started
+            let state = "foo";
+            if (this.currentMatch == "TO") state = "TIMEOUT"; // timeout
+            else if ([15, 14, 45, 44].includes(this.currentMatchTime)) state = "AUTO"; // VRC or VEXU auto
+            else if ([60, 59].includes(this.currentMatchTime)){
+                if (this.currentMatch == "A Coding") state = "AUTO"; // programming skills
+                else state = "DRIVER"; // driving skills or VIQC teamwork
+            }
+            else state = "DRIVER"; // otherwise just assume driver
+            this.log(`State: ${state}; ${this.currentMatchTime}`);
+            
             this.matchRunning = true;
-            this.currentState = "RUNNING";
+            this.currentState = state;
+            // this.currentState = "ACTIVE";
             this.currentFieldId = decoded.fieldId;
             this._whenMatchInfoChanged();
         }
@@ -267,8 +278,8 @@ module.exports = class VexTMWebsocket{
             this.currentFieldId = decoded.fieldId;
             this._whenMatchInfoChanged();
         }
-        // don't have a message type yet for when the audience display is changed :(
 
+        // don't have a message type yet for when the audience display is changed :(
         // else if (message.type == "displayUpdated"){// screen showing on audience display changed
         //     this.currentDisplay = message.display;
         //     this._whenDisplaySelected();

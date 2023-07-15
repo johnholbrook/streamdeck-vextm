@@ -2,5 +2,5 @@
 us.johnholbrook.vextm.sdPlugin/plugin_node/node_modules/
 dist/
 *.streamDeckPlugin
-plugin_node/main-mac
-plugin_node/main-win.exe
+us.johnholbrook.vextm.sdPlugin/plugin_node/main-mac
+us.johnholbrook.vextm.sdPlugin/plugin_node/main-win.exe
