@@ -71,14 +71,6 @@
             }]
         },
         {
-            "Name": "Queue Previous Match",
-            "UUID": "us.johnholbrook.vextm.queue-prev",
-            "Icon": "images/queue_prev",
-            "States": [{
-                "Image": "images/queue_prev"
-            }]
-        },
-        {
             "Name": "Queue Driving Skills",
             "UUID": "us.johnholbrook.vextm.queue-driving",
             "Icon": "images/queue_driving",
@@ -101,19 +93,6 @@
             "States": [{
                 "Image": "images/reset"
             }]
-        },
-        {
-            "Name": "Select Display",
-            "UUID": "us.johnholbrook.vextm.select-display",
-            "Icon": "images/display/display_light",
-            "States": [
-                {
-                    "Image": "images/display/display_light"
-                },
-                {
-                    "Image": "images/display/display_dark"
-                }
-            ]
         }
     ]
 }

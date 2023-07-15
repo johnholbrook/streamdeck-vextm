@@ -1,0 +1,26 @@
+{
+    "description": "These actions have been removed from manifest.json because the 23-24 version of TM does not currently support their functionality.",
+    "removed_actions": [
+        {
+            "Name": "Queue Previous Match",
+            "UUID": "us.johnholbrook.vextm.queue-prev",
+            "Icon": "images/queue_prev",
+            "States": [{
+                "Image": "images/queue_prev"
+            }]
+        },
+        {
+            "Name": "Select Display",
+            "UUID": "us.johnholbrook.vextm.select-display",
+            "Icon": "images/display/display_light",
+            "States": [
+                {
+                    "Image": "images/display/display_light"
+                },
+                {
+                    "Image": "images/display/display_dark"
+                }
+            ]
+        }
+    ]
+}
