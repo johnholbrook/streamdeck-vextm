@@ -492,4 +492,12 @@ module.exports = class VexTMWebsocket{
     onClose(callback){
         this.onCloseCallback = callback;
     }
+
+    /**
+     * Provide the list of fields
+     * @returns {Object} IDs and names of fields in this set
+     */
+    getFields(){
+        return this.fieldList;
+    }
 }

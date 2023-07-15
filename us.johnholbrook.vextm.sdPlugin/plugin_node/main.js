@@ -60,6 +60,21 @@ function log(message){
 }
 
 /**
+ * Set the title text on the specified action
+ * @param {String} context – UUID of action to set title on
+ * @param {String} title - desired title
+ */
+function setTitle(context, title){
+    send({
+        "event": "setTitle",
+        "context": context,
+        "payload": {
+            "title": title
+        }
+    });
+}
+
+/**
  * Remove an item from an array of Objects
  * @param {Array} arr – array to remove the item from
  * @param {Object} key – value to be removed
@@ -161,12 +176,6 @@ function main(){
                     }
                     TM = null;
                     TM = new VexTMWebsocket(tm_addr, tm_pass, tm_fs, log);
-                    // if (TM){
-                    //     TM.setCredentials(tm_addr, tm_pass);
-                    // }
-                    // else{
-                    //     TM = new VexTMWebsocket(tm_addr, tm_pass, log);
-                    // }
                     await TM.init();
                     tm_conn_established = true;
                 }
@@ -188,17 +197,18 @@ function main(){
                 // update the match info displayed on any start/end actions
                 // let info = `${data.match}\n${data.state}\n${secsToTime(data.time)}`;
                 let info = `${data.match}\n${data.field}\n${data.state}\n${secsToTime(data.time)}`;
+                let options = {
+                    1: info,
+                    2: data.match,
+                    3: data.field,
+                    4: data.state,
+                    5: secsToTime(data.time)
+                }
                 actions.forEach(action => {
                     // if (action.action == "us.johnholbrook.vextm.start-end" || action.action == "us.johnholbrook.vextm.match-info"){
                     if (action.action == "us.johnholbrook.vextm.start-end"){
                         // send match into text (match, state, time)
-                        send({
-                            "event": "setTitle",
-                            "context": action.uuid,
-                            "payload": {
-                                "title": info
-                            }
-                        });
+                        setTitle(action.uuid, info);
 
                         // set the appropriate background image
                         // (state 0 is "play", state 1 is "stop")
@@ -211,22 +221,8 @@ function main(){
                         });
                     }
                     else if (action.action == "us.johnholbrook.vextm.match-info"){
-                        // let this_action_text = "";
                         let preference = matchInfoActionPreferences[action.uuid];
-                        let options = {
-                            1: info,
-                            2: data.match,
-                            3: data.field,
-                            4: data.state,
-                            5: secsToTime(data.time)
-                        }
-                        send({
-                            "event": "setTitle",
-                            "context": action.uuid,
-                            "payload": {
-                                "title": options[preference]
-                            }
-                        });
+                        setTitle(action.uuid, options[preference]);
                     }
                 });
             });
@@ -304,18 +300,15 @@ function main(){
             if (json.action == "us.johnholbrook.vextm.select-display"){
                 // keep track of which display should be selected when this action is triggered
                 selectedDisplays[json.context] = json.payload.settings.selected_display ? json.payload.settings.selected_display : 2;
-                // log(JSON.stringify(selectedDisplays));
+                
                 // Set the title of the action according to the selected display
-                send({
-                    "event": "setTitle",
-                    "context": json.context,
-                    "payload": {
-                        "title": display_id_names[json.payload.settings.selected_display]
-                    }
-                });
+                setTitle(json.context, display_id_names[json.payload.settings.selected_display]);
             }
             else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog"].includes(json.action)){
                 skillsFields[json.context] = json.payload.settings.field_id ? json.payload.settings.field_id : 1;
+                if (tm_conn_established){
+                    setTitle(json.context, TM.getFields()[json.payload.settings.field_id])
+                }
             }
             else if (json.action == "us.johnholbrook.vextm.match-info"){
                 matchInfoActionPreferences[json.context] = json.payload.settings.selected_info ? json.payload.settings.selected_info : 1;
@@ -348,20 +341,17 @@ function main(){
             if (json.action == "us.johnholbrook.vextm.select-display"){
                 // keep track of which display should be selected when this action is triggered
                 selectedDisplays[json.context] = json.payload.settings.selected_display;
-                // log(JSON.stringify(selectedDisplays));
+
                 // Set the title of the action according to the selected display
-                send({
-                    "event": "setTitle",
-                    "context": json.context,
-                    "payload": {
-                        "title": display_id_names[json.payload.settings.selected_display]
-                    }
-                });
+                setTitle(json.context, display_id_names[json.payload.settings.selected_display]);
             }
 
             // update the field to queue a skills match on when this action is triggered
             else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog"].includes(json.action)){
                 skillsFields[json.context] = json.payload.settings.field_id;
+                if (tm_conn_established){
+                    setTitle(json.context, TM.getFields()[json.payload.settings.field_id])
+                }
             }
 
             // update the info to be shown on this "match info" action
