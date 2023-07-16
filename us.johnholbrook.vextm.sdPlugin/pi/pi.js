@@ -74,6 +74,18 @@ function connectElgatoStreamDeckSocket(inPort, inPropertyInspectorUUID, inRegist
             document.querySelector("#tm-pass-input").value = data.payload.settings.password ? data.payload.settings.password : "";
             document.querySelector("#field-set-id").value = data.payload.settings.fieldset ? data.payload.settings.fieldset : 1;
         }
+
+        // populate the list of fields in the PI for one of the "queue skills" actions
+        else if (data.event == "sendToPropertyInspector"){            
+            let content = "";
+            let fields = data["payload"];
+            Object.keys(fields).forEach(id => {
+                content += `<option value="${id}">${fields[id]}</option>\n`;
+            });
+            document.querySelector("#field-id-input").innerHTML = content;
+
+            document.querySelector("#field-id-input").value = actionInfo.payload.settings.field_id ? actionInfo.payload.settings.field_id : Math.min(data.payload.keys());
+        }
     };
 
     // show the correct action-specific options, if any
@@ -90,7 +102,7 @@ function connectElgatoStreamDeckSocket(inPort, inPropertyInspectorUUID, inRegist
     else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog"].includes(action)){
         document.querySelector("#display-select-wrapper").style.display = "none";
         document.querySelector("#info-select-wrapper").style.display = "none";
-        document.querySelector("#field-id-input").value = actionInfo.payload.settings.field_id ? actionInfo.payload.settings.field_id : "1";
+        // document.querySelector("#field-id-input").value = actionInfo.payload.settings.field_id ? actionInfo.payload.settings.field_id : "1";
     }
     else{
         document.querySelector("#field-select-wrapper").style.display = "none";

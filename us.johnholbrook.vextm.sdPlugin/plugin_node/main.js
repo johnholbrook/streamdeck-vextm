@@ -255,6 +255,21 @@ function main(){
             });
         }
 
+        // PI loaded
+        else if (json.event == "propertyInspectorDidAppear"){
+            // if the PI that appeared is for a "Queue Skils" action, send it the list of field names
+            if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog"].includes(json.action)){
+                if (tm_conn_established){
+                    send({
+                        event: "sendToPropertyInspector",
+                        action: json.action,
+                        context: json.context,
+                        payload: TM.getFields()
+                    });
+                }
+            }
+        }
+
         // keypress handler
         // if there's no connection to the server, don't do anything in response to a keypress
         else if (json.event == "keyDown" && tm_conn_established){
