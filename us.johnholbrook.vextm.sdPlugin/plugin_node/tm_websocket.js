@@ -367,6 +367,17 @@ module.exports = class VexTMWebsocket{
         };
         this._sendFSRequest(msg);
     }
+    
+    /**
+     * Move the currently-queued match to the specified field.
+     * (this is the same as _setActiveFieldRequest but with a name that makes more sense in the context of using this class)
+     * @param {Number} id - ID of field to move match to
+     */
+    moveMatchToField(id){
+        this._setActiveFieldRequest(id);
+        this.currentFieldId = id;
+    }
+
 
     /**
      * Start the currently-queued match

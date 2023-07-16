@@ -258,7 +258,7 @@ function main(){
         // PI loaded
         else if (json.event == "propertyInspectorDidAppear"){
             // if the PI that appeared is for a "Queue Skils" action, send it the list of field names
-            if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog"].includes(json.action)){
+            if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog", "us.johnholbrook.vextm.move-match"].includes(json.action)){
                 if (tm_conn_established){
                     send({
                         event: "sendToPropertyInspector",
@@ -286,6 +286,9 @@ function main(){
                     break;
                 case "us.johnholbrook.vextm.queue-prog":
                     TM.queueProgrammingSkills(skillsFields[json.context]);
+                    break;
+                case "us.johnholbrook.vextm.move-match":
+                    TM.moveMatchToField(skillsFields[json.context]);
                     break;
                 case "us.johnholbrook.vextm.start-match":
                     TM.start();
@@ -319,11 +322,13 @@ function main(){
                 // Set the title of the action according to the selected display
                 setTitle(json.context, display_id_names[json.payload.settings.selected_display]);
             }
-            else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog"].includes(json.action)){
+            else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog", "us.johnholbrook.vextm.move-match"].includes(json.action)){
                 skillsFields[json.context] = json.payload.settings.field_id ? json.payload.settings.field_id : 1;
-                if (tm_conn_established){
-                    setTitle(json.context, TM.getFields()[json.payload.settings.field_id])
-                }
+                setTimeout(() => {
+                    if (tm_conn_established){
+                        setTitle(json.context, TM.getFields()[json.payload.settings.field_id])
+                    }
+                }, 500); // dumb hack, wait 500ms for TM to connect before trying to set titles on these actions
             }
             else if (json.action == "us.johnholbrook.vextm.match-info"){
                 matchInfoActionPreferences[json.context] = json.payload.settings.selected_info ? json.payload.settings.selected_info : 1;
@@ -343,7 +348,7 @@ function main(){
                 delete selectedDisplays[json.context];
                 // log(JSON.stringify(selectedDisplays));
             }
-            else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog"].includes(json.action)){
+            else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog", "us.johnholbrook.vextm.move-match"].includes(json.action)){
                 delete skillsFields[json.context];
             }
             else if (json.action == "us.johnholbrook.vextm.match-info"){
@@ -362,7 +367,7 @@ function main(){
             }
 
             // update the field to queue a skills match on when this action is triggered
-            else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog"].includes(json.action)){
+            else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog", "us.johnholbrook.vextm.move-match"].includes(json.action)){
                 skillsFields[json.context] = json.payload.settings.field_id;
                 if (tm_conn_established){
                     setTitle(json.context, TM.getFields()[json.payload.settings.field_id])

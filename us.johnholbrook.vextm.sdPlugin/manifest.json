@@ -87,6 +87,14 @@
             }]
         },
         {
+            "Name": "Move Match to Field",
+            "UUID": "us.johnholbrook.vextm.move-match",
+            "Icon": "images/transport",
+            "States": [{
+                "Image": "images/transport"
+            }]
+        },
+        {
             "Name": "Reset Timer",
             "UUID": "us.johnholbrook.vextm.reset",
             "Icon": "images/reset",

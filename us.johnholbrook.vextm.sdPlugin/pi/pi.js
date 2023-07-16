@@ -99,7 +99,7 @@ function connectElgatoStreamDeckSocket(inPort, inPropertyInspectorUUID, inRegist
         document.querySelector("#display-select-wrapper").style.display = "none";
         document.querySelector("#info-select").value = actionInfo.payload.settings.selected_info ? actionInfo.payload.settings.selected_info : "1";
     }
-    else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog"].includes(action)){
+    else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog", "us.johnholbrook.vextm.move-match"].includes(action)){
         document.querySelector("#display-select-wrapper").style.display = "none";
         document.querySelector("#info-select-wrapper").style.display = "none";
         // document.querySelector("#field-id-input").value = actionInfo.payload.settings.field_id ? actionInfo.payload.settings.field_id : "1";
