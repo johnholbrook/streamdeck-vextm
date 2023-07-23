@@ -230,10 +230,10 @@ module.exports = class VexTMWebsocket{
 
         if (decoded.id == 8){ // match queued
             // update the current field ID
-            this.currentFieldId = decoded.fieldId;
+            this.currentFieldId = decoded.fieldId ? decoded.fieldId : 0;
 
             // update the match name
-            this.currentMatch = this._buildMatchName(decoded.match.toJSON());
+            this.currentMatch = decoded.match ? this._buildMatchName(decoded.match.toJSON()) : "NONE";
 
             this._whenMatchInfoChanged();
         }
@@ -272,7 +272,7 @@ module.exports = class VexTMWebsocket{
             this._whenMatchInfoChanged();
         }
         else if (decoded.id == 13){ // field list
-            this.fieldList = decoded.fields;
+            this.fieldList = {0: "N/A", ...decoded.fields}
         }
         else if (decoded.id == 14){ // FIELD_ACTIVATED
             this.currentFieldId = decoded.fieldId;
