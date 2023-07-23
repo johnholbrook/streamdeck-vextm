@@ -208,6 +208,7 @@ module.exports = class VexTMWebsocket{
 
         if (match.round == "QUAL") return `Q${match.match}`;
         else if (elim_rounds.includes(match.round)) return `${match.round} ${match.instance}-${match.match}`;
+        else if (match.round == "TOP_N") return `F ${match.match}` // IQ finals
         else if (match.round == "PRACTICE") return "P0"
         else if (match.round == "TIMEOUT") return "TO"
         else if (match.round == "SKILLS"){
