@@ -6,7 +6,7 @@
     "PropertyInspectorPath": "pi/pi.html",
     "Description": "Plugin for controlling VEX Tournament Manager",
     "Name": "VEX Tournament Manager",
-    "Version": "1.2.0",
+    "Version": "2.0.0",
     "Category": "VEX TM",
     "CategoryIcon": "images/category_icon",
     "URL": "https://github.com/johnholbrook/streamdeck-vextm",
@@ -25,19 +25,6 @@
         "MinimumVersion": "5.0"
     },
     "Actions": [
-        {
-            "Name": "Start/End Match",
-            "UUID": "us.johnholbrook.vextm.start-end",
-            "Icon": "images/start-end/action_icon",
-            "States": [
-                {
-                    "Image": "images/start-end/start"
-                },
-                {
-                    "Image": "images/start-end/end"
-                }
-            ]
-        },
         {
             "Name": "Start Match",
             "UUID": "us.johnholbrook.vextm.start-match",
@@ -71,6 +58,14 @@
             }]
         },
         {
+            "Name": "Queue Previous Match",
+            "UUID": "us.johnholbrook.vextm.queue-prev",
+            "Icon": "images/queue_prev",
+            "States": [{
+                "Image": "images/queue_prev"
+            }]
+        },
+        {
             "Name": "Queue Driving Skills",
             "UUID": "us.johnholbrook.vextm.queue-driving",
             "Icon": "images/queue_driving",
@@ -87,20 +82,25 @@
             }]
         },
         {
-            "Name": "Move Match to Field",
-            "UUID": "us.johnholbrook.vextm.move-match",
-            "Icon": "images/transport",
-            "States": [{
-                "Image": "images/transport"
-            }]
-        },
-        {
             "Name": "Reset Timer",
             "UUID": "us.johnholbrook.vextm.reset",
             "Icon": "images/reset",
             "States": [{
                 "Image": "images/reset"
             }]
+        },
+        {
+            "Name": "Select Display",
+            "UUID": "us.johnholbrook.vextm.select-display",
+            "Icon": "images/display/display_light",
+            "States": [
+                {
+                    "Image": "images/display/display_light"
+                },
+                {
+                    "Image": "images/display/display_dark"
+                }
+            ]
         }
     ]
 }

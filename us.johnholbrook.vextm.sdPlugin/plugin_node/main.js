@@ -5,41 +5,51 @@
  */
 
 const WebSocket = require("ws");
-const dialog = require("dialog");
-const VexTMWebsocket = require("./tm_websocket.js");
-// const { readFileSync } = require("fs");
+const { Client, FieldsetQueueSkillsType, MatchRound } = require("vex-tm-client");
+const auth = require("./auth.json");
 
 // global variables
 var websocket = null; // websocket object used to talk to the stream deck software
 var pluginUUID = null; // opaque value provided by the Stream Deck software
 var tm_addr = null; // address of the TM server
-var tm_pass = null; // TM admin password
-var TM = null; // object representing connection to the TM server
+var tm_key = null; // TM API key
+var tm_fs_id = null; // ID of the field set we're connecting to
+var tm_fs = null;
+var tm_fs_conn = null; // object representing websocket connection to the field set
+var tm_client = null; // object representing connection to the TM server
 var actions = []; // list of all the active actions
 var selectedDisplays = {}; // object containing the display associated with each "select display" action
 var skillsFields = {}; // object containing the field to queue a skills match on for each "queue driving" or "queue programming" action
 var matchInfoActionPreferences = {}; // object containing user preferences for what to show on each "match info" action
 var tm_conn_established = false; // are we connected to tournament manager?
+var fields = null; // list of fields in the selected field set
+var fs_state = { // object representing the current state of the field set
+    selectedDisplay : null,
+    currentMatchName: null,
+    matchState: null,
+    currentField: null
+}
+
 
 // ID and name of each TM display
 const display_id_names = {
-    1: "None",
-    2: "Intro",
-    3: "In-Match",
-    4: "Saved\nMatch\nResults",
-    5: "Qual.\nRankings",
-    6: "Logos",
-    7: "Alliance\nSelection",
-    8: "Elim\nBracket",
-    9: "Skills\nRankings",
-    12: "Slides",
-    13: "Schedule",
-    15: "Insp."
+    "BLANK": "None",
+    "LOGO": "Logos",
+    "INTRO": "Intro",
+    "IN_MATCH": "In-Match",
+    "RESULTS": "Saved\nMatch\nResults",
+    "SCHEDULE": "Schedule",
+    "RANKINGS": "Rankings",
+    "SC_RANKINGS": "Skills\nRankings",
+    "ALLIANCE_SELECTION": "Alliance\nSelection",
+    "BRACKET": "Elim\nBracket",
+    "AWARD": "Slides",
+    "INSPECTION": "Insp."
 }
 
 /**
  * Send some JSON data to the stream deck software.
- * @param {Object} message - the JSON data to send
+ * @param {Object} message the JSON data to send
  */
  function send(message){
     websocket.send(JSON.stringify(message));
@@ -47,7 +57,7 @@ const display_id_names = {
 
 /**
  * Write to the stream deck log.
- * @param {String} message 
+ * @param {String} message message to write to the log
  */
 function log(message){
     send({
@@ -61,8 +71,8 @@ function log(message){
 
 /**
  * Set the title text on the specified action
- * @param {String} context – UUID of action to set title on
- * @param {String} title - desired title
+ * @param {String} context UUID of action to set title on
+ * @param {String} title title to write
  */
 function setTitle(context, title){
     send({
@@ -75,9 +85,24 @@ function setTitle(context, title){
 }
 
 /**
+ * Set the state of the specified action
+ * @param {String} context UUID of the action to set state on
+ * @param {Number} state 0 or 1, depending on the desired state
+ */
+function setState(context, state){
+    send({
+        "event": "setState",
+        "context": context,
+        "payload": {
+            "state": state
+        }
+    });
+}
+
+/**
  * Remove an item from an array of Objects
- * @param {Array} arr – array to remove the item from
- * @param {Object} key – value to be removed
+ * @param {Array} arr array to remove the item from
+ * @param {Object} key value to be removed
  * @returns a copy of arr with (the first instace of) value removed
  */
  function removeItem(arr, key){
@@ -96,23 +121,9 @@ function setTitle(context, title){
 }
 
 /**
- * Convert from an integer number of seconds to a time string (MM:SS)
- * @param {Int} s 
- * @returns a time string (MM:SS)
- */
-function secsToTime(s){
-    let minutes = Math.floor(s/60);
-    let seconds = s - (60*minutes);
-    if (seconds<10){
-        seconds = "0" + seconds;
-    }
-    return `${minutes}:${seconds}`;
-}
-
-/**
  * Delay (synchronous when used with await)
  * @param {Int} delayInms number of ms to delay
- * @returns a pronise that resolves after the specified time
+ * @returns a promise that resolves after the specified time
  */
 function delay(delayInms) {
     return new Promise(resolve => {
@@ -120,6 +131,41 @@ function delay(delayInms) {
         resolve(2);
       }, delayInms);
     });
+}
+
+/**
+ * Update the content of all visible "match info" actions.
+ */
+function updateMatchInfo(){
+    let info = `${fs_state.currentMatchName}\n${fs_state.currentField}\n${fs_state.matchState}`;
+    let options = {
+        1: info,
+        2: fs_state.currentMatchName,
+        3: fs_state.currentField,
+        4: fs_state.matchState
+    }
+
+    actions.forEach(action => {
+        if (action.action == "us.johnholbrook.vextm.match-info"){
+            let preference = matchInfoActionPreferences[action.uuid];
+            setTitle(action.uuid, options[preference]);
+        }
+    });
+}
+
+/**
+ * Construct a "short name" for the specified match to be shown on "match info" actions
+ * @param {Object} match object representing the match sent by TM server
+ * @returns String
+ */
+function buildMatchName(match){
+    if (match.round == "PRACTICE") return `P ${match.match}`;
+    else if (match.round == "QUAL") return `Q ${match.match}`;
+    else if (match.round == "TOP_N") return `F ${match.match}`; // IQ finals
+    else if (match.round == "TIERED_TOP_N_QF") return `QF ${match.match}` // ADC Quarterfinals
+    else if (match.round == "TIERED_TOP_N_SF") return `SF ${match.match}` // ADC Semifinals
+    else if (match.round == "TIERED_TOP_N_F") return `F ${match.match}` // ADC Finals
+    else return `${match.round} ${match.instance}-${match.match}`;
 }
 
 /**
@@ -131,8 +177,6 @@ function main(){
     let inRegisterEvent = process.argv[7];
     let inInfo = JSON.parse(process.argv[9]);
 
-    // dialog.info(JSON.stringify(inInfo));
-
     // create a new websocket on the appropriate port
     websocket = new WebSocket(`ws://127.0.0.1:${inPort}`);
 
@@ -143,7 +187,7 @@ function main(){
             "uuid" : pluginUUID
         });
 
-        // dialog.info("Registered with SD");
+        log("Hello from plugin!")
 
         // hack to get the global settings
         setTimeout(() => {
@@ -154,120 +198,95 @@ function main(){
         }, 200);
     });
 
-
     // message handler
     websocket.on("message", async data => {
         let json = JSON.parse(data);
         log(`Plugin recieved event: ${json.event}`);
 
-        // recieve the TM address/password
+        // recieve the TM address/key
         if (json.event == "didReceiveGlobalSettings"){
             tm_addr = json.payload.settings.address;
-            tm_pass = json.payload.settings.password;
-            tm_fs = json.payload.settings.fieldset;
+            tm_key = json.payload.settings.tm_key;
+            tm_fs_id = json.payload.settings.fieldset;
+            // log(`Plugin recieved addr and key as: ${tm_addr}, ${tm_key}`);
 
-            // try to connect to tournament manager
+            // if we're already connected to TM, disconnect to try again
+            if (tm_fs_conn){
+                tm_fs_conn.disconnect();
+                tm_fs_conn = null;
+                tm_fs = null;
+            }
             tm_conn_established = false;
             while (!tm_conn_established){
-                try{
-                    // (re) create the TM object
-                    if (TM){
-                        TM.close();
-                    }
-                    TM = null;
-                    TM = new VexTMWebsocket(tm_addr, tm_pass, tm_fs, log);
-                    await TM.init();
+                // try to connect to tournament manager
+                tm_client = new Client({
+                    address: `http://${tm_addr}`,
+                    authorization: {
+                    client_id: auth.client_id,
+                    client_secret: auth.client_secret,
+                    grant_type: "client_credentials",
+                    expiration_date: auth.expiration_date,
+                    },
+                    clientAPIKey: tm_key
+                });
+
+                let conn_result = await tm_client.connect();
+                if (conn_result.success){
+                    log("Connected to TM!");
                     tm_conn_established = true;
                 }
-                catch(e){
-                    log(`Error connecting to TM: ${e.message}. Retrying in 10 seconds...`);
-                    // display an alert on all actions
-                    actions.forEach(action => {
-                        send({
-                            "event": "showAlert",
-                            "context": action.uuid
-                        });
-                    });
+                else {
+                    log("Failed to connect to TM, trying again in 10 seconds")
                     await delay(10000);
                 }
             }
+            
+            // connect to speficied field set
+            let fieldsets = await tm_client.getFieldsets()
+            tm_fs = fieldsets.data.find(s => s.id == Number(tm_fs_id));
+            
+            // get list of fields in this set
+            fields = (await tm_fs.getFields()).data;
+            fields.push({id:0, name:""});
+            log(JSON.stringify(fields));
 
-            // callback to execute when the match info changes
-            TM.onMatchInfoChange(data => {
-                // update the match info displayed on any start/end actions
-                // let info = `${data.match}\n${data.state}\n${secsToTime(data.time)}`;
-                let info = `${data.match}\n${data.field}\n${data.state}\n${secsToTime(data.time)}`;
-                let options = {
-                    1: info,
-                    2: data.match,
-                    3: data.field,
-                    4: data.state,
-                    5: secsToTime(data.time)
+            tm_fs_conn = await tm_fs.connect();
+            tm_fs.on("message", event => { // handler for messages from TM
+                // log(JSON.stringify(event));
+
+                if (event.type == "fieldMatchAssigned"){
+                    fs_state.currentField = fields.find(f => f.id == Number(event.fieldID)).name;
+                    let match = event.match;
+                    fs_state.currentMatchName = buildMatchName(match);
+                    updateMatchInfo();
                 }
-                actions.forEach(action => {
-                    // if (action.action == "us.johnholbrook.vextm.start-end" || action.action == "us.johnholbrook.vextm.match-info"){
-                    if (action.action == "us.johnholbrook.vextm.start-end"){
-                        // send match into text (match, state, time)
-                        setTitle(action.uuid, info);
 
-                        // set the appropriate background image
-                        // (state 0 is "play", state 1 is "stop")
-                        send({
-                            "event": "setState",
-                            "context": action.uuid,
-                            "payload": {
-                                "state": data.isRunning ? 1 : 0
-                            }
-                        });
-                    }
-                    else if (action.action == "us.johnholbrook.vextm.match-info"){
-                        let preference = matchInfoActionPreferences[action.uuid];
-                        setTitle(action.uuid, options[preference]);
-                    }
-                });
-            });
+                else if (event.type == "fieldActivated"){
+                    fs_state.currentField = fields.find(f => f.id == Number(event.fieldID)).name;
+                    updateMatchInfo();
+                }
 
-            // callback to execute when a new screen is shown on the audience display
-            TM.onDisplaySelected(display => {
-                // log(`Display updated to ${display}`);
-                // set the appropriate state for each "select display" action
-                setTimeout(() => {
+                else if (event.type == "matchStarted"){
+                    fs_state.matchState = "RUNNING";
+                    updateMatchInfo();
+                }
+
+                else if (event.type == "matchStopped"){
+                    fs_state.matchState = "STOPPED";
+                    updateMatchInfo();
+                }
+
+                else if (event.type == "audienceDisplayChanged"){
+                    // update the state of any "Select Display" actions when the selected audience display changes
+                    fs_state.selectedDisplay = event.display;
+
                     Object.keys(selectedDisplays).forEach(uuid => {
-                        let this_action_disp = parseInt(selectedDisplays[uuid]);
-                        send({
-                            "event": "setState",
-                            "context": uuid,
-                            "payload": {
-                                "state": (this_action_disp == display) ? 0 : 1
-                            }
-                        });
-                    });
-                }, 200)
-            });
-
-            // if the connection to TM is closed...
-            TM.onClose(() => {
-                // ask the stream deck software for the credentials and start trying to reconnect
-                send({
-                    "event": "getGlobalSettings",
-                    "context": pluginUUID
-                });
-            });
-        }
-
-        // PI loaded
-        else if (json.event == "propertyInspectorDidAppear"){
-            // if the PI that appeared is for a "Queue Skils" action, send it the list of field names
-            if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog", "us.johnholbrook.vextm.move-match"].includes(json.action)){
-                if (tm_conn_established){
-                    send({
-                        event: "sendToPropertyInspector",
-                        action: json.action,
-                        context: json.context,
-                        payload: TM.getFields()
+                        let this_action_disp = selectedDisplays[uuid];
+                        setState(uuid, (this_action_disp == event.display) ? 0 : 1);
                     });
                 }
-            }
+            });
+
         }
 
         // keypress handler
@@ -276,35 +295,44 @@ function main(){
             // do the right thing based on which action was triggered
             switch (json.action){
                 case "us.johnholbrook.vextm.queue-next":
-                    TM.queueNextMatch();
+                    tm_fs.queueNextMatch();
                     break;
                 case "us.johnholbrook.vextm.queue-prev":
-                    TM.queuePrevMatch();
+                    // tm_fs.queuePreviousMatch();
+                    tm_fs.send({cmd:"queuePrevMatch"});
                     break;
                 case "us.johnholbrook.vextm.queue-driving":
-                    TM.queueDrivingSkills(skillsFields[json.context]);
+                    tm_fs.queueSkills(FieldsetQueueSkillsType.Driver);
                     break;
                 case "us.johnholbrook.vextm.queue-prog":
-                    TM.queueProgrammingSkills(skillsFields[json.context]);
+                    tm_fs.queueSkills(FieldsetQueueSkillsType.Programming);
                     break;
                 case "us.johnholbrook.vextm.move-match":
-                    TM.moveMatchToField(skillsFields[json.context]);
+                    // TM.moveMatchToField(skillsFields[json.context]);
                     break;
                 case "us.johnholbrook.vextm.start-match":
-                    TM.start();
+                    tm_fs.startMatch();
                     break;
                 case "us.johnholbrook.vextm.end-early":
-                    TM.endEarly();
+                    tm_fs.endMatchEarly();
                     break;
                 case "us.johnholbrook.vextm.start-end":
-                    TM.startOrEnd();
+                    // TM.startOrEnd();
                     break;
                 case "us.johnholbrook.vextm.reset":
-                    TM.resetTimer();
+                    tm_fs.resetTimer();
                     break;
                 case "us.johnholbrook.vextm.select-display":
-                    TM.selectDisplay(selectedDisplays[json.context]);
+                    tm_fs.setAudienceDisplay(selectedDisplays[json.context]);
                     break;
+            }
+        }
+
+        // when a "select display" key is released, update its state again
+        else if (json.event == "keyUp"){
+            if (json.action == "us.johnholbrook.vextm.select-display"){
+                let this_action_disp = selectedDisplays[json.context]
+                setState(json.context, (this_action_disp == fs_state.selectedDisplay) ? 0 : 1);
             }
         }
 
@@ -317,22 +345,17 @@ function main(){
             // log(JSON.stringify(actions));
             if (json.action == "us.johnholbrook.vextm.select-display"){
                 // keep track of which display should be selected when this action is triggered
-                selectedDisplays[json.context] = json.payload.settings.selected_display ? json.payload.settings.selected_display : 2;
+                selectedDisplays[json.context] = json.payload.settings.selected_display ? json.payload.settings.selected_display : "INTRO";
                 
                 // Set the title of the action according to the selected display
                 setTitle(json.context, display_id_names[json.payload.settings.selected_display]);
             }
-            else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog", "us.johnholbrook.vextm.move-match"].includes(json.action)){
-                skillsFields[json.context] = json.payload.settings.field_id ? json.payload.settings.field_id : 1;
-                setTimeout(() => {
-                    if (tm_conn_established){
-                        setTitle(json.context, TM.getFields()[json.payload.settings.field_id])
-                    }
-                }, 500); // dumb hack, wait 500ms for TM to connect before trying to set titles on these actions
-            }
             else if (json.action == "us.johnholbrook.vextm.match-info"){
+                // keep track of what info should be shown on this action
                 matchInfoActionPreferences[json.context] = json.payload.settings.selected_info ? json.payload.settings.selected_info : 1;
-                if (tm_conn_established) TM._whenMatchInfoChanged();
+                
+                // show the selected info on this action
+                if (tm_conn_established) updateMatchInfo();
             }
         }
 
@@ -366,24 +389,18 @@ function main(){
                 setTitle(json.context, display_id_names[json.payload.settings.selected_display]);
             }
 
-            // update the field to queue a skills match on when this action is triggered
-            else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog", "us.johnholbrook.vextm.move-match"].includes(json.action)){
-                skillsFields[json.context] = json.payload.settings.field_id;
-                if (tm_conn_established){
-                    setTitle(json.context, TM.getFields()[json.payload.settings.field_id])
-                }
-            }
-
             // update the info to be shown on this "match info" action
             else if (json.action == "us.johnholbrook.vextm.match-info"){
+                // keep track of what info should be shown on this action
                 matchInfoActionPreferences[json.context] = json.payload.settings.selected_info;
-                if (tm_conn_established) TM._whenMatchInfoChanged();
+
+                // show the selected info on this action
+                if (tm_conn_established) updateMatchInfo();
             }
         }
 
+    }); // end of websocket message handler
+} // end of function 'main'
 
-    })
-
-}
 // call the main function
 main();

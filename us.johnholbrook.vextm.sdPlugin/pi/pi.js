@@ -1,7 +1,7 @@
 /**
  * @file pi.js
  * @author John Holbrook
- * JS code for the property inspector – send address and password to the plugin as needed
+ * JS code for the property inspector – send address and API key to the plugin as needed
 */
 
 // global variables
@@ -71,41 +71,21 @@ function connectElgatoStreamDeckSocket(inPort, inPropertyInspectorUUID, inRegist
         // if the plugin sends a global settings update, update the UI
         if (data.event == "didReceiveGlobalSettings"){
             document.querySelector("#tm-addr-input").value = data.payload.settings.address ? data.payload.settings.address : "";
-            document.querySelector("#tm-pass-input").value = data.payload.settings.password ? data.payload.settings.password : "";
+            document.querySelector("#tm-key-input").value = data.payload.settings.tm_key ? data.payload.settings.tm_key : "";
             document.querySelector("#field-set-id").value = data.payload.settings.fieldset ? data.payload.settings.fieldset : 1;
-        }
-
-        // populate the list of fields in the PI for one of the "queue skills" actions
-        else if (data.event == "sendToPropertyInspector"){            
-            let content = "";
-            let fields = data["payload"];
-            Object.keys(fields).forEach(id => {
-                content += `<option value="${id}">${fields[id]}</option>\n`;
-            });
-            document.querySelector("#field-id-input").innerHTML = content;
-
-            document.querySelector("#field-id-input").value = actionInfo.payload.settings.field_id ? actionInfo.payload.settings.field_id : Math.min(data.payload.keys());
         }
     };
 
     // show the correct action-specific options, if any
     if (action == "us.johnholbrook.vextm.select-display"){
-        document.querySelector("#field-select-wrapper").style.display = "none";
         document.querySelector("#info-select-wrapper").style.display = "none";
-        document.querySelector("#display-select").value = actionInfo.payload.settings.selected_display ? actionInfo.payload.settings.selected_display : "2";
+        document.querySelector("#display-select").value = actionInfo.payload.settings.selected_display ? actionInfo.payload.settings.selected_display : "INTRO";
     }
     else if (action == "us.johnholbrook.vextm.match-info"){
-        document.querySelector("#field-select-wrapper").style.display = "none";
         document.querySelector("#display-select-wrapper").style.display = "none";
         document.querySelector("#info-select").value = actionInfo.payload.settings.selected_info ? actionInfo.payload.settings.selected_info : "1";
     }
-    else if (["us.johnholbrook.vextm.queue-driving", "us.johnholbrook.vextm.queue-prog", "us.johnholbrook.vextm.move-match"].includes(action)){
-        document.querySelector("#display-select-wrapper").style.display = "none";
-        document.querySelector("#info-select-wrapper").style.display = "none";
-        // document.querySelector("#field-id-input").value = actionInfo.payload.settings.field_id ? actionInfo.payload.settings.field_id : "1";
-    }
     else{
-        document.querySelector("#field-select-wrapper").style.display = "none";
         document.querySelector("#display-select-wrapper").style.display = "none";
         document.querySelector("#info-select-wrapper").style.display = "none";
         document.querySelector("#action-settings").style.display = "none";
@@ -128,15 +108,15 @@ function connectElgatoStreamDeckSocket(inPort, inPropertyInspectorUUID, inRegist
  */
 function updateSettings(){
     let address = document.querySelector("#tm-addr-input").value;
-    let password = document.querySelector("#tm-pass-input").value;
+    let tm_key = document.querySelector("#tm-key-input").value;
     let field_set = document.querySelector("#field-set-id").value;
-    log(`PI updating settings: ${address} ${password}`);
+    log(`PI updating settings: ${address} ${tm_key}`);
     send({
         "event": "setGlobalSettings",
         "context": context,
         "payload": {
             "address": address ? address : "localhost",
-            "password": password,
+            "tm_key": tm_key,
             "fieldset": field_set
         }
     });
@@ -158,21 +138,6 @@ function updateSelectedDisplay(){
 }
 
 /**
- * Send the selected field ID to the plugin
- */
-function updateSelectedField(){
-    let selection = document.querySelector("#field-id-input").value;
-    log(`PI setting Field ID to ${selection}`);
-    send({
-        "event": "setSettings",
-        "context": context,
-        "payload": {
-            "field_id": selection
-        }
-    });
-}
-
-/**
  * Send the selected info to display on teh match info action to the plugin
  */
 function updateSelectedInfo(){
@@ -189,10 +154,9 @@ function updateSelectedInfo(){
 
 document.addEventListener("DOMContentLoaded", function() {
     document.querySelector("#tm-addr-input").onchange = updateSettings;
-    document.querySelector("#tm-pass-input").onchange = updateSettings;
+    document.querySelector("#tm-key-input").onchange = updateSettings;
     document.querySelector("#field-set-id").onchange = updateSettings;
     document.querySelector("#reconnect").onclick = updateSettings;
     document.querySelector("#display-select").onchange = updateSelectedDisplay;
-    document.querySelector("#field-id-input").onchange = updateSelectedField;
     document.querySelector("#info-select").onchange = updateSelectedInfo;
 });
