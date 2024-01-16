@@ -1,8 +1,8 @@
 @REM build the node script that talks to TM and responds to keypresses
-cd .\us.johnholbrook.vextm.sdPlugin\plugin_node
+cd .\plugin_node
 call npm install
 call npm run build
-cd ..\..
+cd ..
 
 @REM package the .sdPlugin folder into a .streamDeckPlugin file for distribution
 @REM https://developer.elgato.com/documentation/stream-deck/sdk/exporting-your-plugin/

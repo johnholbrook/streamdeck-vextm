@@ -1,0 +1,16 @@
+{
+  "name": "streamdeck_vextm_plugin",
+  "version": "1.0.0",
+  "description": "Streamdeck plugin to control VEX Tournament manager",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "pkg -t node18-win main.js -o ../us.johnholbrook.vextm.sdPlugin/main-win.exe && pkg -t node18-macos main.js -o ../us.johnholbrook.vextm.sdPlugin/main-mac"
+  },
+  "author": "John Holbrook",
+  "license": "ISC",
+  "dependencies": {
+    "vex-tm-client": "^1.4.0",
+    "ws": "^8.3.0"
+  }
+}

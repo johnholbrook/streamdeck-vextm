@@ -5,3 +5,5 @@ dist/
 us.johnholbrook.vextm.sdPlugin/plugin_node/main-mac
 us.johnholbrook.vextm.sdPlugin/plugin_node/main-win.exe
 us.johnholbrook.vextm.sdPlugin/plugin_node/auth.json
+plugin_node/auth.json
+plugin_node/node_modules/
