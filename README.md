@@ -1,13 +1,10 @@
 # streamdeck-vextm
- [Stream Deck](https://www.elgato.com/en/welcome-to-stream-deck) plugin for controlling [VEX Tournament Manager](https://vextm.dwabtech.com/).
- 
- NOTE: This plugin is unofficial and there are still a few rough edges here and there - use it at your own risk.
+ [Stream Deck](https://www.elgato.com/en/welcome-to-stream-deck) plugin for controlling [VEX Tournament Manager](https://vextm.dwabtech.com/) using the [official API](https://kb.roboticseducation.org/hc/en-us/articles/19238156122135-TM-Public-API).
  
  ![image](https://user-images.githubusercontent.com/3682581/147676915-527bb66d-098a-4cb9-ad26-e0d1a23aeb94.png)
 
- 
+
 ### Features
-Anything you can do from the field control webpage, this plugin will let you do from a Stream Deck. This includes:
 * Start and stop matches
 * Queue next or previous match
 * Queue driving & programming skills matches
