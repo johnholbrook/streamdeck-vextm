@@ -217,7 +217,7 @@ function main(){
                 tm_fs = null;
             }
             tm_conn_established = false;
-            while (!tm_conn_established){
+            // while (!tm_conn_established){
                 // try to connect to tournament manager
                 tm_client = new Client({
                     address: `http://${tm_addr}`,
@@ -236,10 +236,12 @@ function main(){
                     tm_conn_established = true;
                 }
                 else {
-                    log("Failed to connect to TM, trying again in 10 seconds")
-                    await delay(10000);
+                    log("Failed to connect to TM, try again by clicking 'RECONNECT'");
+                    return;
+                    // log("Failed to connect to TM, trying again in 10 seconds")
+                    // await delay(10000);
                 }
-            }
+            // }
             
             // connect to speficied field set
             let fieldsets = await tm_client.getFieldsets()
