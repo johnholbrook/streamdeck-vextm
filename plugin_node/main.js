@@ -279,6 +279,11 @@ function main(){
                 }
 
                 else if (event.type == "audienceDisplayChanged"){
+                    if (event.display == "IN_MATCH"){
+                        fs_state.matchState = "PRESTART";
+                        updateMatchInfo();
+                    }
+
                     // update the state of any "Select Display" actions when the selected audience display changes
                     fs_state.selectedDisplay = event.display;
 
