@@ -6,7 +6,7 @@
     "PropertyInspectorPath": "pi/pi.html",
     "Description": "Plugin for controlling VEX Tournament Manager",
     "Name": "VEX Tournament Manager",
-    "Version": "2.0.3",
+    "Version": "2.0.4",
     "Category": "VEX TM",
     "CategoryIcon": "images/category_icon",
     "URL": "https://github.com/johnholbrook/streamdeck-vextm",
