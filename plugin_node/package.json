@@ -10,7 +10,7 @@
   "author": "John Holbrook",
   "license": "ISC",
   "dependencies": {
-    "vex-tm-client": "^1.4.0",
+    "vex-tm-client": "^1.4.1",
     "ws": "^8.3.0"
   }
 }

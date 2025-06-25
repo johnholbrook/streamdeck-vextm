@@ -237,9 +237,8 @@ function main(){
                 }
                 else {
                     log("Failed to connect to TM, try again by clicking 'RECONNECT'");
+                    // log(JSON.stringify(conn_result))
                     return;
-                    // log("Failed to connect to TM, trying again in 10 seconds")
-                    // await delay(10000);
                 }
             // }
             
@@ -305,8 +304,8 @@ function main(){
                     tm_fs.queueNextMatch();
                     break;
                 case "us.johnholbrook.vextm.queue-prev":
-                    // tm_fs.queuePreviousMatch();
-                    tm_fs.send({cmd:"queuePrevMatch"});
+                    tm_fs.queuePreviousMatch();
+                    // tm_fs.send({cmd:"queuePrevMatch"});
                     break;
                 case "us.johnholbrook.vextm.queue-driving":
                     tm_fs.queueSkills(FieldsetQueueSkillsType.Driver);
